@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"go-playground/memsync"
 	"net/http"
 	"playground/cart"
 	"playground/token"
+	"strconv"
+	"sync"
 
 	"github.com/go-redis/redis"
 )
@@ -15,9 +18,11 @@ func main() {
 
 	// server()
 
-	// redisTest()
+	// redisCall()
 
-	slices()
+	// slices()
+
+	memsyncCall()
 }
 
 func server() {
@@ -70,7 +75,7 @@ func server() {
 	http.ListenAndServe(":"+port, r)
 }
 
-func redisTest() {
+func redisCall() {
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
@@ -137,4 +142,42 @@ func slices() {
 	for _, el := range c.Items {
 		fmt.Println(el)
 	}
+}
+
+func memsyncCall() {
+	var wg sync.WaitGroup
+	ms := memsync.New()
+
+	fmt.Println("Initial: " + strconv.Itoa(ms.Val))
+	fmt.Println()
+
+	wg.Add(3)
+
+	// fork-join model
+	// go will ensure "fork" part, means the code will "create a child" and run on its own
+	go ms.AddVal("First", 2, &wg)
+	go ms.AddVal("Second", 2, &wg)
+
+	msg := "Hello"
+	go func() {
+		defer wg.Done()
+
+		msg = "Changed"
+	}()
+
+	// this will ensure "join" part, means the main goroutine will not exit until all forks/childs are done
+	// make sure all forks/childs joined back
+	wg.Wait()
+
+	fmt.Println()
+	// value changed because goroutines execute within the same address space they were created in
+	fmt.Println("Msg: " + msg)
+
+	defer func() {
+		fmt.Println("Total AddVal: " + strconv.Itoa(ms.Val))
+	}()
+
+	fmt.Println()
+	fmt.Println("Finished all")
+	fmt.Println()
 }
