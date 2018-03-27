@@ -22,13 +22,14 @@ func New() *Data {
 
 // AddVal will add/increment new value to val
 func (d *Data) AddVal(n string, v int, wg *sync.WaitGroup) {
-	fmt.Println("Start AddVal: " + n)
-
 	d.m.Lock()
 	defer d.m.Unlock()
 
-	// mark fork/child as finished, create join point
 	defer wg.Done()
+
+	fmt.Println("Start AddVal: " + n)
+
+	// mark fork/child as finished, create join point
 
 	defer func() {
 		fmt.Println("Finished AddVal: " + n)
