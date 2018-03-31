@@ -5,6 +5,7 @@ import (
 	"go-playground/cart"
 	"go-playground/memsync"
 	"go-playground/token"
+	"math/rand"
 	"net/http"
 	"runtime"
 	"strconv"
@@ -36,7 +37,9 @@ func main() {
 
 	// bufferedChanEx()
 
-	selectChanEx()
+	// selectChanEx()
+
+	leakingGoroutineEx()
 }
 
 func serverEx() {
@@ -462,4 +465,88 @@ func selectChanEx() {
 	fmt.Println()
 
 	fmt.Println(runtime.NumCPU())
+}
+
+func leakingGoroutineEx() {
+	// let caller decide when to stop our clojure by doing close(done)
+	// quote:
+	// If a goroutine is responsible for creating a goroutine,
+	// it is also responsible for ensuring it can stop the goroutine
+
+	// pass done <-chan so we can get notified/signaled to stop
+	doWork := func(done <-chan interface{}, strings <-chan string) <-chan interface{} {
+		terminated := make(chan interface{})
+
+		go func() {
+			fmt.Println("Started clojure")
+			// if nil passed for strings, this part will never be reached
+			defer fmt.Println("doWork exited")
+			// let caller (parent goroutine) know we finished, unblock blocking part
+			defer close(terminated)
+
+			for {
+				select {
+				case s := <-strings:
+					// Do something with strings
+					fmt.Println(s)
+				case <-done: // will be called only on close(done)
+					return
+				}
+			}
+		}()
+
+		// Goroutine continues doing its job (or leaking in case of nil strings <-chan)
+		fmt.Println("Returned")
+		return terminated
+	}
+
+	done := make(chan interface{})
+	terminated := doWork(done, nil)
+
+	go func() {
+		// Cancel the operation after 1 second.
+		time.Sleep(2 * time.Second)
+		fmt.Println("Canceling doWork goroutine...")
+		close(done)
+	}()
+
+	fmt.Println("Blocking part")
+	<-terminated
+	fmt.Println("Done")
+
+	// ################################
+
+	fmt.Println()
+
+	newRandStream := func(done <-chan interface{}) <-chan int {
+		randStream := make(chan int)
+
+		go func() {
+			defer fmt.Println("newRandStream closure exited")
+			defer close(randStream)
+
+			for {
+				select {
+				case randStream <- rand.Int():
+				case <-done: // when notified, stop this goroutine and prevent infinite leaking
+					return
+				}
+			}
+		}()
+
+		return randStream
+	}
+
+	done = make(chan interface{})
+	randStream := newRandStream(done)
+
+	for i := 1; i <= 3; i++ {
+		fmt.Printf("%d: %d\n", i, <-randStream)
+	}
+	// notify newRandStream we finished with it
+	close(done)
+
+	fmt.Println("Do some other work")
+	time.Sleep(3 * time.Second)
+	fmt.Println("Finished")
 }
