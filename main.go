@@ -7,7 +7,6 @@ import (
 	"go-playground/token"
 	"math/rand"
 	"net/http"
-	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -258,6 +257,7 @@ func condEx() {
 		fmt.Println()
 		c.L.Unlock()
 
+		// 2.) send signal
 		c.Signal()
 	}
 
@@ -269,6 +269,7 @@ func condEx() {
 			for len(queue) == qMax {
 				fmt.Println("Waiting for more space -> Total items in " + msg + " queue: " + strconv.Itoa(len(queue)))
 				fmt.Println()
+				// 1.) wait until we are signaled
 				c.Wait()
 			}
 			// end
@@ -281,6 +282,8 @@ func condEx() {
 
 			// remove from queue after 2 seconds or some other cicrumstances/conditions
 			time.Sleep(2 * time.Second)
+
+			// 3.) repeat the process
 			go removeFromQueue(msg)
 
 			c.L.Unlock()
@@ -291,19 +294,21 @@ func condEx() {
 }
 
 func broadcastCondEx() {
-	// when we want to notify all registered handlers
+	// when we want to notify all registered handlers - which are probably blocked until signaled
 	// unblock all blocking goroutines
 	type Button struct {
 		Clicked *sync.Cond
 	}
 	button := Button{Clicked: sync.NewCond(&sync.Mutex{})}
 
+	// sync.Once
 	// Will make sure function passed to once.Do(fn) will run only ONCE, even in different goroutines
 	// calls to once.Do(fn) and once.Do(fn2) will happen only ONCE (in first call to once.Do(fn))
-	// sync.Once
+	// so, once.Do() will run only once, no matter how many different functions we pass,
+	// or how many calls we make to once.Do()
 
-	// when frequently allocating many objects of the same type
 	// sync.Pool
+	// when frequently allocating many objects of the same type
 
 	// condition to register, and when c *sync.Cond occurs do the following...
 	subscribe := func(c *sync.Cond, run func()) {
@@ -462,9 +467,6 @@ func selectChanEx() {
 	}
 
 	fmt.Println("End")
-	fmt.Println()
-
-	fmt.Println(runtime.NumCPU())
 }
 
 func leakingGoroutineEx() {
@@ -472,6 +474,32 @@ func leakingGoroutineEx() {
 	// quote:
 	// If a goroutine is responsible for creating a goroutine,
 	// it is also responsible for ensuring it can stop the goroutine
+
+	// Leaking example
+	doSmtn := func(strings <-chan string) <-chan interface{} {
+		completed := make(chan interface{})
+		defer fmt.Println("doSmtn completed")
+
+		go func() {
+			fmt.Println("doSmtn clojure")
+
+			defer fmt.Println("doSmtn exited") // never called! goroutine remains in memory, hence leaking
+			defer close(completed)
+
+			for s := range strings {
+				// Do something interesting
+				fmt.Println(s)
+			}
+		}()
+
+		fmt.Println("Last line in doSmtn")
+		return completed
+	}
+	doSmtn(nil)
+	// Perhaps more work is done here
+	fmt.Println("After doSmtn")
+	fmt.Println()
+	// End
 
 	// pass done <-chan so we can get notified/signaled to stop
 	doWork := func(done <-chan interface{}, strings <-chan string) <-chan interface{} {
