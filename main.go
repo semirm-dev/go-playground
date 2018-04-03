@@ -478,12 +478,13 @@ func leakingGoroutineEx() {
 	// Leaking example
 	doSmtn := func(strings <-chan string) <-chan interface{} {
 		completed := make(chan interface{})
-		defer fmt.Println("doSmtn completed")
+		defer fmt.Println("doSmtn exited")
 
 		go func() {
 			fmt.Println("doSmtn clojure")
 
-			defer fmt.Println("doSmtn exited") // never called! goroutine remains in memory, hence leaking
+			defer fmt.Println("doSmtn exited")
+			// never called! goroutine remains in background, hence leaking
 			defer close(completed)
 
 			for s := range strings {
@@ -504,6 +505,7 @@ func leakingGoroutineEx() {
 	// pass done <-chan so we can get notified/signaled to stop
 	doWork := func(done <-chan interface{}, strings <-chan string) <-chan interface{} {
 		terminated := make(chan interface{})
+		defer fmt.Println("doWork exited")
 
 		go func() {
 			fmt.Println("Started clojure")
@@ -517,14 +519,15 @@ func leakingGoroutineEx() {
 				case s := <-strings:
 					// Do something with strings
 					fmt.Println(s)
-				case <-done: // will be called only on close(done)
+				case <-done: // will be called only on close(done) - its caller's job to do so
+					// the only way to make defer close(terminated) gets called
 					return
 				}
 			}
 		}()
 
-		// Goroutine continues doing its job (or leaking in case of nil strings <-chan)
-		fmt.Println("Returned")
+		// Goroutine continues doing its job (leaking clojure in case of nil strings <-chan, because <-done never happened)
+		fmt.Println("Last line in doWork")
 		return terminated
 	}
 
@@ -538,7 +541,7 @@ func leakingGoroutineEx() {
 		close(done)
 	}()
 
-	fmt.Println("Blocking part")
+	fmt.Println("Blocking part until close(terminated) gets called")
 	<-terminated
 	fmt.Println("Done")
 
@@ -557,6 +560,7 @@ func leakingGoroutineEx() {
 				select {
 				case randStream <- rand.Int():
 				case <-done: // when notified, stop this goroutine and prevent infinite leaking
+					// the only way to make defer close(randStream) gets called
 					return
 				}
 			}
