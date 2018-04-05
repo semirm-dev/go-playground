@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  go-playground:
+    image: x64puzzle/go-playground:v1.0
+    restart: always
+    build: ./
+    ports:
+      - 8080:8080

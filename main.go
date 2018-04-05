@@ -2,14 +2,16 @@ package main
 
 import (
 	"fmt"
-	"go-playground/cart"
-	"go-playground/memsync"
-	"go-playground/token"
+	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/x64puzzle/go-playground/cart"
+	"github.com/x64puzzle/go-playground/memsync"
+	"github.com/x64puzzle/go-playground/token"
 
 	"github.com/go-redis/redis"
 )
@@ -38,7 +40,17 @@ func main() {
 
 	// selectChanEx()
 
-	leakingGoroutineEx()
+	// leakingGoroutineEx()
+
+	fmt.Println("Starting server...")
+
+	r := http.NewServeMux()
+
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, ":D")
+	})
+
+	log.Fatal(fmt.Println(http.ListenAndServe(":8080", r)))
 }
 
 func serverEx() {
