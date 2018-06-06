@@ -644,14 +644,17 @@ func chanEx2() {
 		*rec <- path
 	}
 
-	handleDownload := func(rec *chan string) {
+	handleDownload := func(rec *chan string) string {
 		downloaded := <-*rec
-		fmt.Printf("\nDownloaded: %v", downloaded)
+		fmt.Printf("\nHandling downloaded data: %v", downloaded)
+		return downloaded
 	}
 
 	// Usage of download():
 	rec := make(chan string)
 	go download("path1", &rec)
 
-	handleDownload(&rec)
+	fmt.Printf("\nWaiting for download...\n")
+	downloaded := handleDownload(&rec)
+	fmt.Printf("\nDownloaded data: %v", downloaded)
 }
