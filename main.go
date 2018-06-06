@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -42,15 +41,19 @@ func main() {
 
 	// leakingGoroutineEx()
 
-	fmt.Println("Starting server...")
+	chanEx1()
 
-	r := http.NewServeMux()
+	chanEx2()
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, ":D")
-	})
+	// fmt.Println("Starting server...")
 
-	log.Fatal(fmt.Println(http.ListenAndServe(":8080", r)))
+	// r := http.NewServeMux()
+
+	// r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	fmt.Fprintln(w, ":D")
+	// })
+
+	// log.Fatal(fmt.Println(http.ListenAndServe(":8080", r)))
 }
 
 func serverEx() {
@@ -593,4 +596,62 @@ func leakingGoroutineEx() {
 	fmt.Println("Do some other work")
 	time.Sleep(3 * time.Second)
 	fmt.Println("Finished")
+}
+
+// concurrent function body
+func chanEx1() {
+	download := func(done <-chan interface{}) <-chan int {
+		result := make(chan int)
+
+		go func() {
+			defer close(result)
+
+			select {
+			case <-done:
+				return
+			default:
+				for i := 0; i < 2; i++ {
+					fmt.Printf("\nSending: %v", i)
+					time.Sleep(time.Second * 2)
+					fmt.Printf("\nSent: %v", i)
+					result <- i
+				}
+			}
+		}()
+
+		return result
+	}
+
+	// Usage of download():
+	// Since we call download() we make sure we close it too
+	// We do so by passing done chan to download(), which is then handled in download()
+	done := make(chan interface{})
+
+	received := download(done)
+
+	for r := range received {
+		fmt.Printf("\nReceived: %v", r)
+	}
+
+	close(done)
+}
+
+// concurrently called
+func chanEx2() {
+	download := func(path string, rec *chan string) {
+		fmt.Printf("\nDownloading: %v", path)
+		time.Sleep(3 * time.Second)
+		*rec <- path
+	}
+
+	handleDownload := func(rec *chan string) {
+		downloaded := <-*rec
+		fmt.Printf("\nDownloaded: %v", downloaded)
+	}
+
+	// Usage of download():
+	rec := make(chan string)
+	go download("path1", &rec)
+
+	handleDownload(&rec)
 }
