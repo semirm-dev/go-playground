@@ -41,9 +41,11 @@ func main() {
 
 	// leakingGoroutineEx()
 
-	chanEx1()
+	// chanEx1()
 
-	chanEx2()
+	// chanEx2()
+
+	chanEx3()
 
 	// fmt.Println("Starting server...")
 
@@ -660,4 +662,47 @@ func chanEx2() {
 	fmt.Printf("\nWaiting for download...\n")
 	downloaded := handleDownload(&rec)
 	fmt.Printf("\nDownloaded data: %v", downloaded)
+}
+
+// how to properly handle errors in channels
+func chanEx3() {
+	type Result struct {
+		Error    error
+		Response *http.Response
+	}
+
+	checkStatus := func(done <-chan interface{}, urls ...string) <-chan Result {
+		results := make(chan Result)
+
+		go func() {
+			defer close(results)
+
+			for _, url := range urls {
+				resp, err := http.Get(url)
+
+				result := Result{Error: err, Response: resp}
+
+				select {
+				case <-done:
+					return
+				case results <- result:
+					// do nothing but write to result to results chan
+				}
+			}
+		}()
+
+		return results
+	}
+
+	done := make(chan interface{})
+	urls := []string{"https://www.google.com", "https://badhost"}
+
+	for result := range checkStatus(done, urls...) {
+		if result.Error != nil {
+			fmt.Printf("\nError: %v", result.Error)
+			continue
+		}
+		fmt.Printf("\nResponse: %v\n", result.Response.Status)
+	}
+	close(done)
 }
