@@ -47,6 +47,8 @@ func main() {
 
 	chanEx3()
 
+	chanEx4()
+
 	// fmt.Println("Starting server...")
 
 	// r := http.NewServeMux()
@@ -704,5 +706,58 @@ func chanEx3() {
 		}
 		fmt.Printf("\nResponse: %v\n", result.Response.Status)
 	}
+	close(done)
+}
+
+// generator for a pipeline is any function that converts a set of discrete values into a stream of values on a channel
+func chanEx4() {
+	// this function will repeat func call you pass in infinitely until you tell it to stop
+	repeat := func(done <-chan interface{}, fn func() interface{}) <-chan interface{} {
+		outStream := make(chan interface{})
+
+		go func() {
+			defer close(outStream)
+
+			for {
+				select {
+				case <-done:
+					return
+				case outStream <- fn():
+				}
+			}
+		}()
+
+		return outStream
+	}
+
+	// take first n values from readStream
+	take := func(done <-chan interface{}, readStream <-chan interface{}, n int) <-chan interface{} {
+		outStream := make(chan interface{})
+
+		go func() {
+			defer close(outStream)
+
+			for i := 0; i < n; i++ {
+				select {
+				case <-done:
+					return
+				case outStream <- <-readStream:
+					// read from readStream (<-readStream will return first value) and store in outStream
+				}
+			}
+		}()
+
+		return outStream
+	}
+
+	done := make(chan interface{})
+	repeated := repeat(done, func() interface{} {
+		return rand.Int()
+	})
+
+	for num := range take(done, repeated, 5) {
+		fmt.Printf("\nNum: %v", num)
+	}
+
 	close(done)
 }
