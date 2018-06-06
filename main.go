@@ -519,6 +519,9 @@ func leakingGoroutineEx() {
 
 	// pass done <-chan so we can get notified/signaled to stop
 	doWork := func(done <-chan interface{}, strings <-chan string) <-chan interface{} {
+		// without terminated chan, we could not "block" main/parent goroutine,
+		// it would exit before this clojure completes its job
+		// this way main/parent goroutine knows there is a pending/running gorouting, so wait for it
 		terminated := make(chan interface{})
 		defer fmt.Println("doWork exited")
 
