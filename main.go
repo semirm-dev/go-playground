@@ -45,9 +45,11 @@ func main() {
 
 	// chanEx2()
 
-	chanEx3()
+	// chanEx3()
 
-	chanEx4()
+	// chanEx4()
+
+	chanEx5()
 
 	// fmt.Println("Starting server...")
 
@@ -643,7 +645,7 @@ func chanEx1() {
 	close(done)
 }
 
-// concurrently called
+// concurrently called, communication via channels
 func chanEx2() {
 	download := func(path string, rec *chan string) {
 		fmt.Printf("\nDownloading: %v", path)
@@ -759,5 +761,56 @@ func chanEx4() {
 		fmt.Printf("\nNum: %v", num)
 	}
 
+	close(done)
+}
+
+// infinitely read from input channel
+func chanEx5() {
+	handle := func(done <-chan interface{}, msgs <-chan string) <-chan string {
+		completed := make(chan string)
+
+		if msgs == nil {
+			close(completed)
+			return completed
+		}
+
+		go func() {
+			defer close(completed)
+
+			for {
+				select {
+				case <-done:
+					return
+				case <-msgs:
+					for m := range msgs {
+						completed <- fmt.Sprintf("%v", m)
+					}
+				}
+			}
+		}()
+
+		return completed
+	}
+
+	done := make(chan interface{})
+	strs := make(chan string)
+
+	go func() {
+		for i := 0; i < 5; i++ {
+			d := "data_" + fmt.Sprintf("%v", i)
+
+			fmt.Printf("\nSending to channel: %v\n", d)
+
+			strs <- d
+		}
+	}()
+
+	fmt.Printf("\nWaiting for handle...\n")
+
+	for c := range handle(done, strs) {
+		fmt.Printf("\nCompleted: %v\n", c)
+	}
+
+	// if we ever reach this line, it means handle func got corrupted
 	close(done)
 }
