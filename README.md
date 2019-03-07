@@ -9,7 +9,8 @@ Just playing around with Go
 * Controllers, usecases layer, use repository layer to apply business logic and against database layer, wire it all together
 
 * Each layer must be changed without affecting other layers (not even single line of code should be changed in other layers)
-* Each layer must communicate with another through interfaces, there must be no single concrete implementation dependency
+* Each layer must communicate with another through interfaces, there must be no single concrete implementation dependency. 
+Interfaces should be simple and their job is to transport and translate data between layers, plus they will make layers testable in isolation.
 * Each layer should have its own rules:
 > Business layer - not allowing customers to order unavailable items is a rule that applies to the web shop as well as to orders placed via a telephone hotline, orders must not exceed 250$... – such rules are business-wise, for everyone, not technical/application or specific use case
 
@@ -20,4 +21,5 @@ Just playing around with Go
 * Where is each layer used
 * Where is its interface
 * Where is its implementation
+* Is it testable in isolation (no other layers should be touched/affected at all)
 
