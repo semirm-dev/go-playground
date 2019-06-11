@@ -314,13 +314,6 @@ func condEx() {
 }
 
 func broadcastCondEx() {
-	// when we want to notify all registered handlers - which are probably blocked until signaled
-	// unblock all blocking goroutines
-	type Button struct {
-		Clicked *sync.Cond
-	}
-	button := Button{Clicked: sync.NewCond(&sync.Mutex{})}
-
 	// sync.Once
 	// Will make sure function passed to once.Do(fn) will run only ONCE, even in different goroutines
 	// calls to once.Do(fn) and once.Do(fn2) will happen only ONCE (in first call to once.Do(fn))
@@ -330,54 +323,97 @@ func broadcastCondEx() {
 	// sync.Pool
 	// when frequently allocating many objects of the same type
 
-	// condition to register, and when c *sync.Cond occurs do the following...
+	// example 1
+
+	type Button struct {
+		Clicked *sync.Cond
+	}
+	button := Button{Clicked: sync.NewCond(&sync.Mutex{})}
+
 	subscribe := func(c *sync.Cond, run func()) {
 		var running sync.WaitGroup
 
 		running.Add(1)
 
 		go func() {
-			// confirmation that goroutine has started
 			running.Done()
 
-			// wait until broadcast gets triggered and then run the run() function
-			c.L.Lock() // obtain a lock
-			defer c.L.Unlock()
-			fmt.Println("Waiting for signal...")
+			c.L.Lock()
+
 			c.Wait()
 
-			fmt.Println("Before run")
-			run()
-			fmt.Println("After run")
+			go run()
+
+			c.L.Unlock()
 		}()
 
 		running.Wait()
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(3)
-
 	subscribe(button.Clicked, func() {
-		fmt.Println("Action 1")
+		fmt.Println("Action 1 started")
 		time.Sleep(3 * time.Second)
-		wg.Done()
+		fmt.Println("Action 1 finished")
 	})
 	subscribe(button.Clicked, func() {
-		fmt.Println("Action 2")
-		time.Sleep(3 * time.Second)
-		wg.Done()
+		fmt.Println("Action 2 started")
+		time.Sleep(1 * time.Second)
+		fmt.Println("Action 2 finished")
 	})
 	subscribe(button.Clicked, func() {
-		fmt.Println("Action 3")
-		time.Sleep(3 * time.Second)
-		wg.Done()
+		fmt.Println("Action 3 started")
+		time.Sleep(2 * time.Second)
+		fmt.Println("Action 3 finished")
 	})
 
-	// make the button.Clicked (c *sync.Cond in subscribe) signal occur
 	button.Clicked.Broadcast()
 
-	wg.Wait()
+	// example 2
+
+	fmt.Println("example 2")
+	type Downloader struct {
+		Started *sync.Cond
+	}
+	downloader := &Downloader{Started: sync.NewCond(&sync.Mutex{})}
+
+	download := func(started *sync.WaitGroup, downloader *sync.Cond, path string) {
+		logrus.Info("download about to started: ", path)
+
+		time.Sleep(2 * time.Second)
+
+		go func() {
+			logrus.Info("started: ", path)
+			started.Done()
+
+			downloader.L.Lock()
+			downloader.Wait()
+
+			go func() {
+				logrus.Info("downloading from: ", path)
+				time.Sleep(2 * time.Second)
+				logrus.Info("downloaded from: ", path)
+			}()
+
+			downloader.L.Unlock()
+		}()
+
+	}
+
+	var started sync.WaitGroup
+	started.Add(3)
+
+	go download(&started, downloader.Started, "url.com/1")
+	go download(&started, downloader.Started, "url.com/2")
+	go download(&started, downloader.Started, "url.com/3")
+
+	started.Wait()
+
+	logrus.Warn("broadcasting")
+	downloader.Started.Broadcast()
+
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt)
+	<-ch
 
 	fmt.Println("All finished")
 }
