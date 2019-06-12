@@ -4,14 +4,18 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/x64integer/go-playground/cart"
-	"github.com/x64integer/go-playground/memsync"
-	"github.com/x64integer/go-playground/token"
+	"github.com/semirm-dev/go-common/util"
+	"github.com/semirm-dev/go-playground/cart"
+	"github.com/semirm-dev/go-playground/memsync"
+	"github.com/semirm-dev/go-playground/token"
+	"github.com/sirupsen/logrus"
 )
 
 const port = "9000"
@@ -48,7 +52,9 @@ func main() {
 
 	// chanEx4()
 
-	chanEx5()
+	// chanEx5()
+
+	chanPlaying()
 
 	// fmt.Println("Starting server...")
 
@@ -848,4 +854,94 @@ func chanEx5() {
 
 	// if we ever reach this line, it means handle func got corrupted
 	close(done)
+}
+
+func chanSimple() {
+	done := make(chan bool)
+	comm := make(chan int)
+
+	go func() {
+		for {
+			select {
+			case <-time.After(2 * time.Second):
+				i := util.RandomInt(1, 99)
+				comm <- i
+				logrus.Info("sent: ", i)
+			}
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case i := <-comm:
+				logrus.Info("received_1: ", i)
+			}
+		}
+	}()
+	go func() {
+		for {
+			select {
+			case i := <-comm:
+				logrus.Info("received_2: ", i)
+			}
+		}
+	}()
+
+	<-done
+}
+
+func chanPlaying() {
+	done := make(chan bool)
+
+	download := func(done <-chan bool, path string, stream <-chan string) <-chan []byte {
+		completed := make(chan []byte)
+
+		go func() {
+			defer func() {
+				logrus.Info("closed")
+				close(completed)
+			}()
+
+			// infinitely read from stream
+			for {
+				select {
+				case <-done:
+					return
+				case s := <-stream:
+					completed <- []byte(s)
+				case <-time.After(300 * time.Millisecond):
+					completed <- []byte(path)
+				}
+			}
+		}()
+
+		return completed
+	}
+
+	stream := make(chan string)
+
+	go func() {
+		for {
+			select {
+			case <-time.After(1 * time.Second):
+				stream <- "data " + fmt.Sprint(util.RandomInt(1, 10))
+			}
+		}
+	}()
+
+	result := download(done, "some/path/1", stream)
+
+	go func() {
+		select {
+		case <-time.After(3 * time.Second):
+			close(done)
+		}
+	}()
+
+	logrus.Info("reading")
+
+	for r := range result {
+		logrus.Info("result_1: ", string(r))
+	}
 }
