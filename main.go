@@ -54,7 +54,7 @@ func main() {
 
 	// chanEx5()
 
-	chanPlaying()
+	chanReadStream()
 
 	// fmt.Println("Starting server...")
 
@@ -805,57 +805,6 @@ func chanEx4() {
 	close(done)
 }
 
-// infinitely read from input channel
-func chanEx5() {
-	handle := func(done <-chan interface{}, msgs <-chan string) <-chan string {
-		completed := make(chan string)
-
-		if msgs == nil {
-			close(completed)
-			return completed
-		}
-
-		go func() {
-			defer close(completed)
-
-			for {
-				select {
-				case <-done:
-					return
-				case <-msgs:
-					for m := range msgs {
-						completed <- fmt.Sprintf("%v", m)
-					}
-				}
-			}
-		}()
-
-		return completed
-	}
-
-	done := make(chan interface{})
-	strs := make(chan string)
-
-	go func() {
-		for i := 0; i < 5; i++ {
-			d := "data_" + fmt.Sprintf("%v", i)
-
-			fmt.Printf("\nSending to channel: %v\n", d)
-
-			strs <- d
-		}
-	}()
-
-	fmt.Printf("\nWaiting for handle...\n")
-
-	for c := range handle(done, strs) {
-		fmt.Printf("\nCompleted: %v\n", c)
-	}
-
-	// if we ever reach this line, it means handle func got corrupted
-	close(done)
-}
-
 func chanSimple() {
 	done := make(chan bool)
 	comm := make(chan int)
@@ -891,7 +840,7 @@ func chanSimple() {
 	<-done
 }
 
-func chanPlaying() {
+func chanReadStream() {
 	done := make(chan bool)
 
 	download := func(done <-chan bool, path string, stream <-chan string) <-chan []byte {
@@ -903,7 +852,7 @@ func chanPlaying() {
 				close(completed)
 			}()
 
-			// infinitely read from stream
+			// infinitely read from stream, until close(done)
 			for {
 				select {
 				case <-done:
@@ -921,6 +870,7 @@ func chanPlaying() {
 
 	stream := make(chan string)
 
+	// mock streaming
 	go func() {
 		for {
 			select {
@@ -932,6 +882,7 @@ func chanPlaying() {
 
 	result := download(done, "some/path/1", stream)
 
+	// mock closing done channel, stop reading from stream
 	go func() {
 		select {
 		case <-time.After(3 * time.Second):
@@ -941,6 +892,7 @@ func chanPlaying() {
 
 	logrus.Info("reading")
 
+	// handle results
 	for r := range result {
 		logrus.Info("result_1: ", string(r))
 	}
