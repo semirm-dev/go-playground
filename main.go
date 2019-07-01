@@ -18,10 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const port = "9000"
-
 func main() {
-
 	// serverEx()
 
 	// redisEx()
@@ -54,17 +51,9 @@ func main() {
 
 	// chanEx5()
 
-	chanReadStream()
+	// chanReadStream()
 
-	// fmt.Println("Starting server...")
-
-	// r := http.NewServeMux()
-
-	// r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	fmt.Fprintln(w, ":D")
-	// })
-
-	// log.Fatal(fmt.Println(http.ListenAndServe(":8080", r)))
+	// chanPlaying()
 }
 
 func serverEx() {
@@ -113,8 +102,8 @@ func serverEx() {
 		w.Write([]byte("Wrong token"))
 	})
 
-	fmt.Println("Listening on port: " + port)
-	http.ListenAndServe(":"+port, r)
+	fmt.Println("Listening on port: 9000")
+	http.ListenAndServe(":9000", r)
 }
 
 func redisEx() {
@@ -841,6 +830,64 @@ func chanSimple() {
 }
 
 func chanReadStream() {
+	done := make(chan bool)
+
+	download := func(done <-chan bool, path string, stream <-chan string) <-chan []byte {
+		completed := make(chan []byte)
+
+		go func() {
+			defer func() {
+				logrus.Info("closed")
+				close(completed)
+			}()
+
+			// infinitely read from stream, until close(done)
+			for {
+				select {
+				case <-done:
+					return
+				case s := <-stream:
+					completed <- []byte(s)
+				case <-time.After(300 * time.Millisecond):
+					completed <- []byte(path)
+				}
+			}
+		}()
+
+		return completed
+	}
+
+	stream := make(chan string)
+
+	// mock streaming
+	go func() {
+		for {
+			select {
+			case <-time.After(1 * time.Second):
+				stream <- "data " + fmt.Sprint(util.RandomInt(1, 10))
+			}
+		}
+	}()
+
+	result := download(done, "some/path/1", stream)
+
+	// mock closing done channel, stop reading from stream
+	go func() {
+		select {
+		case <-time.After(3 * time.Second):
+			close(done)
+		}
+	}()
+
+	logrus.Info("reading")
+
+	// handle results
+	for r := range result {
+		logrus.Info("result_1: ", string(r))
+	}
+}
+
+func chanPlaying() {
 	done := make(chan bool)
 
 	download := func(done <-chan bool, path string, stream <-chan string) <-chan []byte {
