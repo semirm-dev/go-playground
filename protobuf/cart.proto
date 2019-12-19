@@ -1,6 +1,0 @@
-// syntax = "proto3";
-
-message Cart {
-    optional string Name = 1;
-    optional int32 Total = 2;
-}
