@@ -15,6 +15,46 @@ import (
 
 func main() {
 	logrus.Info("playground")
+
+	var s1 = &s{
+		val:  "s1",
+		val2: 1,
+	}
+
+	var s2 = s{
+		val:  "s2",
+		val2: 2,
+	}
+
+	sn := modify(*s1)
+	logrus.Info(s1)
+	logrus.Info(sn)
+	sn.val = "changed again"
+	sn.val2 = 2222222
+
+	logrus.Info(s1)
+	logrus.Info(sn)
+
+	sn = modify(s2)
+	logrus.Info(s2)
+	logrus.Info(sn)
+	sn.val = "changed again 2222"
+	sn.val2 = 4444444
+
+	logrus.Info(s2)
+	logrus.Info(sn)
+}
+
+func modify(s s) *s {
+	s.val = "s changed"
+	s.val2 = 11111
+
+	return &s
+}
+
+type s struct {
+	val  string
+	val2 int
 }
 
 func memSyncEx() {
