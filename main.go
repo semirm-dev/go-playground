@@ -13,6 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// As of Go 1.8, garbage collection pauses are generally between 10 and 100 microseconds!
+
 func main() {
 	logrus.Info("playground")
 
