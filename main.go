@@ -45,6 +45,28 @@ func main() {
 
 	logrus.Info(s2)
 	logrus.Info(sn)
+	
+	si := &impl{}
+	run(si)
+}
+
+
+type runner interface {
+	run()
+}
+
+type impl struct {}
+func (i *impl) run() {}
+
+func run(r runner) {
+	var i interface{} = r
+
+	switch i.(type) {
+	case int:
+		logrus.Info("its int")
+	case *impl:
+		logrus.Info("its *impl")
+	}
 }
 
 func modify(s s) *s {
