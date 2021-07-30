@@ -28,3 +28,10 @@ Interfaces should be simple and their job is to transport and translate data bet
 * bufio. - wrap existing Reader, Writer with Buffer - makes less system calls, memory and cpu efficient
 * ioutil - for small and simple task, not efficient at all for long-lived apps and big files
 * bytes. - create new buffered Reader, Writer, ....
+
+
+
+When a goroutine hangs without returning, the space in memory
+remains used, contributing to the application's size in memory. The
+goroutine and the variables it defines in the stack will get collected by
+the GC only when the goroutine returns or panics.
