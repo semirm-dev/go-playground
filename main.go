@@ -26,6 +26,25 @@ func main() {
 
 }
 
+// we can use context to close goroutine - instead of done chan
+func NewGenInt64(ctx context.Context) <-chan int {
+	result := make(chan int)
+
+	go func() {
+		for i := 0; ; i++ {
+			select {
+			case result <- i:
+				// do nothing
+			case <-ctx.Done():
+				close(result)
+				return
+			}
+		}
+	}()
+
+	return result
+}
+
 func mem() {
 	var s1 = &s{
 		val:  "s1",
