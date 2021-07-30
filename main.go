@@ -23,7 +23,74 @@ import (
 func main() {
 	logrus.Info("playground")
 
+}
 
+// 1.) read from reader, pass to next in line
+func SourceLine(ctx context.Context, r io.ReadCloser) <-chan string {
+	ch := make(chan string)
+
+	go func() {
+		defer func() {
+			r.Close()
+			close(ch)
+		}()
+
+		s := bufio.NewScanner(r)
+		for s.Scan() {
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- s.Text():
+			}
+		}
+	}()
+
+	return ch
+}
+
+// 2.) next in line, filtering from previous reader, send to next in line, printer
+func TextFilter(ctx context.Context, src <-chan string, filter string) <-chan string {
+	ch := make(chan string)
+
+	go func() {
+		defer close(ch)
+
+		for v := range src {
+			if !strings.Contains(v, filter) {
+				continue
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- v:
+			}
+		}
+	}()
+
+	return ch
+}
+
+// 3.) print filtered data, last in line
+func Printer(ctx context.Context, src <-chan string, color int, highlight string, w io.Writer) {
+	const close = "\x1b[39m"
+	open := fmt.Sprintf("\x1b[%dm", color)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case v, ok := <-src:
+			if !ok {
+				return
+			}
+			i := strings.Index(v, highlight)
+			if i == -1 {
+				panic(v)
+			}
+			fmt.Fprint(w, v[:i], open, highlight, close, v[i+len(highlight):], "\n")
+		}
+	}
 }
 
 // we can use context to close goroutine - instead of done chan
@@ -82,7 +149,8 @@ type runner interface {
 	run()
 }
 
-type impl struct {}
+type impl struct{}
+
 func (i *impl) run() {}
 
 func run(r runner) {
@@ -896,7 +964,6 @@ func ctxs() {
 	//	log.Fatalln(err)
 	//}
 }
-
 
 func cc(ctx context.Context) {
 forloop:
