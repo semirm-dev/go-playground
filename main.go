@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
+	"context"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,6 +23,10 @@ import (
 func main() {
 	logrus.Info("playground")
 
+
+}
+
+func mem() {
 	var s1 = &s{
 		val:  "s1",
 		val2: 1,
@@ -45,11 +54,10 @@ func main() {
 
 	logrus.Info(s2)
 	logrus.Info(sn)
-	
+
 	si := &impl{}
 	run(si)
 }
-
 
 type runner interface {
 	run()
@@ -719,5 +727,229 @@ func chanReadStream() {
 	// handle results
 	for r := range result {
 		logrus.Info("result_1: ", string(r))
+	}
+}
+
+func ctxs() {
+	//list := []string{
+	//	"localhost:9090",
+	//	"localhost:9091",
+	//	"localhost:9092",
+	//}
+	//go func() {
+	//	listener, err := net.Listen("tcp", list[0])
+	//	if err != nil {
+	//		log.Fatalln("Listener:", list[0], err)
+	//	}
+	//	time.Sleep(time.Second * 5)
+	//	c, err := listener.Accept()
+	//	if err != nil {
+	//		log.Fatalln("Listener:", list[0], err)
+	//	}
+	//	defer c.Close()
+	//}()
+	//ctx, canc := context.WithTimeout(context.Background(), time.Second*10)
+	//defer canc()
+	//wg := sync.WaitGroup{}
+	//wg.Add(len(list))
+	//for _, addr := range list {
+	//	go func(addr string) {
+	//		defer wg.Done()
+	//		conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", addr)
+	//		if err != nil {
+	//			log.Println("-> Connection:", err)
+	//			return
+	//		}
+	//		log.Println("-> Connection to", addr, "cancelling context")
+	//		canc()
+	//		conn.Close()
+	//	}(addr)
+	//}
+	//wg.Wait()
+
+	//ctx, cancel := context.WithTimeout(context.Background(), time.Second * 5)
+	//defer cancel()
+	//
+	//cc(ctx)
+	//
+	//for {
+	//	select {
+	//	case <-ctx.Done():
+	//		break
+	//	default:
+	//		continue
+	//	}
+	//
+	//	break
+	//}
+	//
+	//logrus.Info("main completed")
+
+	//ctx, cancel := context.WithCancel(context.Background())
+	//time.AfterFunc(time.Second*10, cancel)
+	//done := ctx.Done()
+	//for i := 0; ; i++ {
+	//	select {
+	//	case <-done:
+	//		fmt.Println("exit", ctx.Err())
+	//		return
+	//	case <-time.After(time.Second):
+	//		fmt.Println("tick", i)
+	//	}
+	//}
+
+	//ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	// Even though ctx will be expired, it is good practice to call its
+	// cancellation function in any case. Failure to do so may keep the
+	// context and its parent alive longer than necessary.
+	//defer cancel()
+
+	//time.AfterFunc(time.Second*10, cancel)
+	//done := ctx.Done()
+	//for i := 0; ; i++ {
+	//	select {
+	//	case <-done:
+	//		fmt.Println("exit", ctx.Err())
+	//		return
+	//	case <-time.After(time.Second):
+	//		fmt.Println("tick", i)
+	//	}
+	//}
+
+	//ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	//time.AfterFunc(time.Second*10, cancel)
+	//done := ctx.Done()
+	//for i := 0; ; i++ {
+	//	select {
+	//	case <-done:
+	//		fmt.Println("exit", ctx.Err())
+	//		return
+	//	case <-time.After(time.Second):
+	//		fmt.Println("tick", i)
+	//	}
+	//}
+
+	// gen generates integers in a separate goroutine and
+	// sends them to the returned channel.
+	// The callers of gen need to cancel the context once
+	// they are done consuming generated integers not to leak
+	// the internal goroutine started by gen.
+	//gen := func(ctx context.Context) <-chan int {
+	//	dst := make(chan int)
+	//	n := 1
+	//	go func() {
+	//		for {
+	//			select {
+	//			case <-ctx.Done():
+	//				return // returning not to leak the goroutine
+	//			case dst <- n:
+	//				n++
+	//			}
+	//		}
+	//	}()
+	//	return dst
+	//}
+	//
+	//ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel() // cancel when we are finished consuming integers
+	//
+	//for n := range gen(ctx) {
+	//	fmt.Println(n)
+	//	if n == 5 {
+	//		break
+	//	}
+	//}
+
+	//const addr = "localhost:8080"
+	//http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	//	time.Sleep(time.Second * 5)
+	//})
+	//go func() {
+	//	if err := http.ListenAndServe(addr, nil); err != nil {
+	//		log.Fatalln(err)
+	//	}
+	//}()
+	//req, _ := http.NewRequest(http.MethodGet, "http://"+addr, nil)
+	//ctx, canc := context.WithTimeout(context.Background(), time.Second*2)
+	//defer canc()
+	//time.Sleep(time.Second)
+	//if _, err := http.DefaultClient.Do(req.WithContext(ctx)); err != nil {
+	//	log.Fatalln(err)
+	//}
+}
+
+
+func cc(ctx context.Context) {
+forloop:
+	for {
+		select {
+		case <-ctx.Done():
+			logrus.Warn("request canceled")
+			break forloop
+		case <-time.After(time.Second):
+			logrus.Info("working...")
+		}
+	}
+
+	logrus.Info("returned")
+}
+
+func rd() {
+	wd, err := os.Getwd()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	logrus.Info("starting dir:", wd)
+
+	if err = os.Chdir("/"); err != nil {
+		logrus.Fatal(err)
+	}
+
+	if wd, err = os.Getwd(); err != nil {
+		logrus.Fatal(err)
+	}
+
+	logrus.Info("final dir:", wd)
+}
+
+func buf() {
+	str := strings.NewReader("my very long string")
+	buff := bytes.NewBuffer(make([]byte, 16))
+
+	for {
+		p := make([]byte, 16)
+
+		_, err := str.Read(p)
+
+		if err == io.EOF {
+			break
+		}
+
+		buff.Write(p)
+	}
+
+	logrus.Info(buff.String())
+}
+
+func bufbuf() {
+	s := bufio.NewScanner(os.Stdin)
+	w := os.Stdout
+
+	for {
+		s.Scan()
+
+		msg := string(s.Bytes())
+		if msg == "exit" {
+			return
+		}
+
+		if msg != "" {
+			_, err := fmt.Fprint(w, "You wrote: "+msg)
+			if err != nil {
+				logrus.Error(err)
+				return
+			}
+		}
 	}
 }

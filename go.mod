@@ -1,8 +1,8 @@
 module github.com/semirm-dev/go-playground
 
-go 1.13
+go 1.16
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.8.1
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 )
