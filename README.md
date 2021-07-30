@@ -23,3 +23,8 @@ Interfaces should be simple and their job is to transport and translate data bet
 * Where is its implementation
 * Is it testable in isolation (no other layers should be touched/affected at all)
 
+
+* io. - Reader, Writer (no buffers around - not always efficient, system calls on each Read(), Write())
+* bufio. - wrap existing Reader, Writer with Buffer - makes less system calls, memory and cpu efficient
+* ioutil - for small and simple task, not efficient at all for long-lived apps and big files
+* bytes. - create new buffered Reader, Writer, ....
