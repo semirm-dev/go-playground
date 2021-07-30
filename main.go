@@ -23,6 +23,35 @@ import (
 func main() {
 	logrus.Info("playground")
 
+	//ctx := context.Background()
+	//src := SourceLine(ctx, ioutil.NopCloser(strings.NewReader(sometext)))
+	//filter := TextFilter(ctx, src, search)
+	//Printer(ctx, filter, 31, search, os.Stdout)
+}
+
+func SourceLineWords(ctx context.Context, r io.ReadCloser) <-chan []string {
+	ch := make(chan []string)
+	go func() {
+		defer func() { r.Close(); close(ch) }()
+		b := bytes.Buffer{}
+		s := bufio.NewScanner(r)
+		for s.Scan() {
+			b.Reset()
+			b.Write(s.Bytes())
+			words := []string{}
+			w := bufio.NewScanner(&b)
+			w.Split(bufio.ScanWords)
+			for w.Scan() {
+				words = append(words, w.Text())
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- words:
+			}
+		}
+	}()
+	return ch
 }
 
 // 1.) read from reader, pass to next in line
