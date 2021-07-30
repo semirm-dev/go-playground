@@ -31,12 +31,12 @@ func NewGenInt64(ctx context.Context) <-chan int {
 	result := make(chan int)
 
 	go func() {
+		defer close(result)
 		for i := 0; ; i++ {
 			select {
 			case result <- i:
 				// do nothing
 			case <-ctx.Done():
-				close(result)
 				return
 			}
 		}
