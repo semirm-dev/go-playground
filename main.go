@@ -54,6 +54,7 @@ func SourceLineWords(ctx context.Context, r io.ReadCloser) <-chan []string {
 	return ch
 }
 
+// each func result is input for next function in the line, func = stage
 // 1.) read from reader, pass to next in line
 func SourceLine(ctx context.Context, r io.ReadCloser) <-chan string {
 	ch := make(chan string)
