@@ -114,3 +114,6 @@ This is *I for components
 - entity -> high level, business critical rules, data, knows nothing about usecases
 - usecase -> low level, application rules, input, output, ref to entity, knows about entities, they know nothing about web!
 - try to not modify existing functions, add new modified versions (v2) instead
+
+* Concurrency vs Parallelism: 
+Think of many cooks making a plate of Carbonara pasta. In the parallel approach, the tasks are split across the number of cooks available, and a single portion would be completed as quickly as it took these cooks to complete their specific tasks. In a concurrent world, you would get a portion for every cook, where each cook does all of the tasks. You use parallelism for speed and concurrency for scale.
