@@ -31,19 +31,28 @@ func main() {
 
 func SourceLineWords(ctx context.Context, r io.ReadCloser) <-chan []string {
 	ch := make(chan []string)
+
 	go func() {
-		defer func() { r.Close(); close(ch) }()
+		defer func() {
+			r.Close()
+			close(ch)
+		}()
+
 		b := bytes.Buffer{}
-		s := bufio.NewScanner(r)
-		for s.Scan() {
+		sc := bufio.NewScanner(r)
+
+		for sc.Scan() {
 			b.Reset()
-			b.Write(s.Bytes())
-			words := []string{}
+			b.Write(sc.Bytes())
+
+			var words []string
 			w := bufio.NewScanner(&b)
 			w.Split(bufio.ScanWords)
+
 			for w.Scan() {
 				words = append(words, w.Text())
 			}
+
 			select {
 			case <-ctx.Done():
 				return
@@ -51,6 +60,7 @@ func SourceLineWords(ctx context.Context, r io.ReadCloser) <-chan []string {
 			}
 		}
 	}()
+
 	return ch
 }
 
@@ -66,6 +76,7 @@ func SourceLine(ctx context.Context, r io.ReadCloser) <-chan string {
 		}()
 
 		s := bufio.NewScanner(r)
+
 		for s.Scan() {
 			select {
 			case <-ctx.Done():
@@ -129,6 +140,7 @@ func NewGenInt64(ctx context.Context) <-chan int {
 
 	go func() {
 		defer close(result)
+
 		for i := 0; ; i++ {
 			select {
 			case result <- i:
