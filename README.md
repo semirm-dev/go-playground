@@ -115,5 +115,8 @@ This is *I for components
 - usecase -> low level, application rules, input, output, ref to entity, knows about entities, they know nothing about web!
 - try to not modify existing functions, add new modified versions (v2) instead
 
-* Concurrency vs Parallelism: 
-Think of many cooks making a plate of Carbonara pasta. In the parallel approach, the tasks are split across the number of cooks available, and a single portion would be completed as quickly as it took these cooks to complete their specific tasks. In a concurrent world, you would get a portion for every cook, where each cook does all of the tasks. You use parallelism for speed and concurrency for scale.
+Concurrency vs Parallelism: 
+* Think of many cooks making a plate of Carbonara pasta. In the parallel approach, the tasks are split across the number of cooks available, and a single portion would be completed as quickly as it took these cooks to complete their specific tasks. In a concurrent world, you would get a portion for every cook, where each cook does all of the tasks. You use parallelism for speed and concurrency for scale.
+* Concurrent, many actions in progress at same time, execution does not have to happen at same time (but it can!)
+  Concurrency can be implemented with parallelism (execution at same time) or context switching (not at same time).
+  Parallelism, many actions executing at the same time, thanks to multi-core processors

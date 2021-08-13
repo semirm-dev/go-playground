@@ -44,7 +44,6 @@ import (
 //defer b.Flush() // ensure buffer leftover is written (flushed) as well
 //// write operations
 
-
 func ReadAll() {
 	f, err := os.Open("../fff/mf.txt")
 	if err != nil {
@@ -62,7 +61,7 @@ func ReadAll() {
 	}
 }
 
-func ReadChunk()  {
+func ReadChunk() {
 	f, err := os.Open("../fff/mf.txt")
 	if err != nil {
 		logrus.Fatal("failed to open file: ", err)
@@ -89,7 +88,7 @@ func ReadChunk()  {
 	}
 }
 
-func ReadBuff()  {
+func ReadBuff() {
 	f, err := os.Open("../fff/mf.txt")
 	if err != nil {
 		logrus.Fatal("failed to open file: ", err)
@@ -118,7 +117,7 @@ func ReadBuff()  {
 	}
 }
 
-func ReadBuffR()  {
+func ReadBuffR() {
 	f, err := os.Open("../fff/mf.txt")
 	if err != nil {
 		logrus.Fatal("failed to open file: ", err)
