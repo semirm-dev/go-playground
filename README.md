@@ -4,19 +4,6 @@
 * adapters, most outer circle, implement most inner circle, knows about other components, replace-able
 * dependency always points inwards, inner circle must never know anything about outer circle (world)
 
-#### io
-* io. - Reader, Writer (no buffers around - not always efficient, system calls on each Read(), Write())
-* bufio. - wrap existing Reader, Writer with Buffer - makes less system calls, memory and cpu efficient
-* ioutil. - for small and simple task, not efficient at all for long-lived apps and big files
-* bytes. - create new buffered Reader, Writer, ....
-
-
-#### goroutine leaking
-When a goroutine hangs without returning, the space in memory
-remains used, contributing to the application's size in memory. The
-goroutine and the variables it defines in the stack will get collected by
-the GC only when the goroutine returns or panics.
-
 
 #### SOLID
 *S
@@ -70,7 +57,25 @@ This is *I for components
 - usecase -> low severity, application rules, input, output, ref to entity, knows about entities, they know nothing about web!
 - try to not modify existing functions, add new modified versions (v2) instead
 
-Concurrency vs Parallelism: 
+
+#### Concurrency vs Parallelism: 
 * Concurrency can be implemented with parallelism (execution at same time) or context switching (not at same time)
 * Concurrent, many actions in progress at same time, execution does not have to happen at same time (but it can!)
 * Parallelism, many actions executing at the same time, thanks to multi-core processors
+
+* race-condition, concurrent execution of a function can lead to undesired behavior, errors might not happen
+* data-race, concurrent read + write will crash application
+* deadlock, two threads wait for each other to unlock, infinitely waiting for each other
+
+
+#### goroutine leaking
+When a goroutine hangs without returning, the space in memory
+remains used, contributing to the application's size in memory. The
+goroutine and the variables it defines in the stack will get collected by
+the GC only when the goroutine returns or panics.
+
+#### io
+* io. - Reader, Writer (no buffers around - not always efficient, system calls on each Read(), Write())
+* bufio. - wrap existing Reader, Writer with Buffer - makes less system calls, memory and cpu efficient
+* ioutil. - for small and simple task, not efficient at all for long-lived apps and big files
+* bytes. - create new buffered Reader, Writer, ....
