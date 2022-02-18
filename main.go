@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io"
 	"math/rand"
 	"net/http"
@@ -14,8 +15,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // As of Go 1.8, garbage collection pauses are generally between 10 and 100 microseconds!
@@ -23,11 +22,22 @@ import (
 func main() {
 	logrus.Info("playground")
 
-	//ctx := context.Background()
-	//src := SourceLine(ctx, ioutil.NopCloser(strings.NewReader(sometext)))
-	//filter := TextFilter(ctx, src, search)
-	//Printer(ctx, filter, 31, search, os.Stdout)
 }
+
+func arrr() {
+	arr := make([]int, 2, 6) // [0, 0], len 2, cap 6
+	arr2 := make([]int, 0)   // empty array
+	arr3 := make([]int, 2)   // [0, 0], len 2, cap 2
+
+	logrus.Info(arr)
+	logrus.Info(arr2)
+	logrus.Info(arr3)
+}
+
+//ctx := context.Background()
+//src := SourceLine(ctx, ioutil.NopCloser(strings.NewReader(sometext)))
+//filter := TextFilter(ctx, src, search)
+//Printer(ctx, filter, 31, search, os.Stdout)
 
 func SourceLineWords(ctx context.Context, r io.ReadCloser) <-chan []string {
 	ch := make(chan []string)
