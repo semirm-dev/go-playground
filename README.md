@@ -79,3 +79,13 @@ the GC only when the goroutine returns or panics.
 * bufio. - wrap existing Reader, Writer with Buffer - makes less system calls, memory and cpu efficient
 * ioutil. - for small and simple task, not efficient at all for long-lived apps and big files
 * bytes. - create new buffered Reader, Writer, ....
+
+#### mem
+- stack, local variables, functions, variables guaranteed not to be used anywhere out of their inner scope, lifo cleaned
+- heap, variables might be referenced elsewhere, in other parts of the application, longer lifetime, gc collected
+- stack is limited to 1gb on 64bits, and 250mb on 32bits
+- heap is limited to the all available memory
+- copied variable (struct{}) will usually remain on stack
+- pointer variable (*struct{}) will usually go to heap
+- goroutine stack size starts at 2kb and grows/shrinks, after func return stack is cleaned and returned value is copied to caller
+- both storages (stack and heap) will clean a variable when it is no longer needed
