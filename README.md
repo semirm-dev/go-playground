@@ -81,8 +81,8 @@ the GC only when the goroutine returns or panics.
 * bytes. - create new buffered Reader, Writer, ....
 
 #### mem
-- stack, local variables, functions, variables guaranteed not to be used anywhere out of their inner scope, lifo cleaned
-- heap, variables might be referenced elsewhere, in other parts of the application, longer lifetime, gc collected
+- stack, local variables, not referenced after function return, short lifetime, lifo cleaned
+- heap, variables referenced after function return, too big values, unknown size, longer lifetime, gc collected
 - stack is limited to 1gb on 64bits, and 250mb on 32bits
 - heap is limited to the all available memory
 - copied variable (struct{}) will usually remain on stack
