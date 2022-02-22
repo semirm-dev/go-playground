@@ -11,15 +11,9 @@ import (
 
 // each write/read is system call, make as little as possible such system calls - use buffers
 
-// io. - Reader, Writer (no buffers around - not always efficient, system calls on each Read(), Write())
-// bufio. - wrap existing Reader, Writer with Buffer - makes less system calls, memory and cpu efficient
-// ioutil - for small and simple task, not efficient at all for long-lived apps and big files
-// bytes. - create new buffered Reader, Writer, ....
-
 // readers
-// every Read() is system call on disk
-// read in memory as little as possible, otherwise system might kill our app if we use too much memory
-// use buffers, buffers allow us to read chunks of data only
+// buff := bytes.NewBuffer(make([]byte, 16))
+// buff.WriteFrom(io.Reader)
 //BenchmarkReadAll
 //BenchmarkReadAll-8     	     153	   8275323 ns/op
 //BenchmarkReadChunk
@@ -30,9 +24,6 @@ import (
 //BenchmarkReadBuffR-8   	     127	   9181988 ns/op
 
 // writers
-// every Write() is system call on disk
-// use buffers, buffers allow us to make less write system calls
-// system call write is called only when buffer is full
 // buff := bytes.NewBuffer(make([]byte, 16))
 // buff.WriteTo(io.Writer)
 
