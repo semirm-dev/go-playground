@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -34,118 +35,8 @@ func arrr() {
 	logrus.Info(arr3)
 }
 
-//ctx := context.Background()
-//src := SourceLine(ctx, ioutil.NopCloser(strings.NewReader(sometext)))
-//filter := TextFilter(ctx, src, search)
-//Printer(ctx, filter, 31, search, os.Stdout)
-
-func SourceLineWords(ctx context.Context, r io.ReadCloser) <-chan []string {
-	ch := make(chan []string)
-
-	go func() {
-		defer func() {
-			r.Close()
-			close(ch)
-		}()
-
-		b := bytes.Buffer{}
-		sc := bufio.NewScanner(r)
-
-		for sc.Scan() {
-			b.Reset()
-			b.Write(sc.Bytes())
-
-			var words []string
-			w := bufio.NewScanner(&b)
-			w.Split(bufio.ScanWords)
-
-			for w.Scan() {
-				words = append(words, w.Text())
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case ch <- words:
-			}
-		}
-	}()
-
-	return ch
-}
-
-// each func result is input for next function in the line, func = stage
-// 1.) read from reader, pass to next in line
-func SourceLine(ctx context.Context, r io.ReadCloser) <-chan string {
-	ch := make(chan string)
-
-	go func() {
-		defer func() {
-			r.Close()
-			close(ch)
-		}()
-
-		s := bufio.NewScanner(r)
-
-		for s.Scan() {
-			select {
-			case <-ctx.Done():
-				return
-			case ch <- s.Text():
-			}
-		}
-	}()
-
-	return ch
-}
-
-// 2.) next in line, filtering from previous reader, send to next in line, printer
-func TextFilter(ctx context.Context, src <-chan string, filter string) <-chan string {
-	ch := make(chan string)
-
-	go func() {
-		defer close(ch)
-
-		for v := range src {
-			if !strings.Contains(v, filter) {
-				continue
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case ch <- v:
-			}
-		}
-	}()
-
-	return ch
-}
-
-// 3.) print filtered data, last in line
-func Printer(ctx context.Context, src <-chan string, color int, highlight string, w io.Writer) {
-	const close = "\x1b[39m"
-	open := fmt.Sprintf("\x1b[%dm", color)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case v, ok := <-src:
-			if !ok {
-				return
-			}
-			i := strings.Index(v, highlight)
-			if i == -1 {
-				panic(v)
-			}
-			fmt.Fprint(w, v[:i], open, highlight, close, v[i+len(highlight):], "\n")
-		}
-	}
-}
-
 // we can use context to close goroutine - instead of done chan
-func NewGenInt64(ctx context.Context) <-chan int {
+func contextToClose(ctx context.Context) <-chan int {
 	result := make(chan int)
 
 	go func() {
@@ -1088,6 +979,118 @@ func bufbuf() {
 				logrus.Error(err)
 				return
 			}
+		}
+	}
+}
+
+func ctxx() {
+	ctx := context.Background()
+	src := sourceLine(ctx, ioutil.NopCloser(strings.NewReader("some random text")))
+	filter := textFilter(ctx, src, "some")
+	printer(ctx, filter, 31, "some", os.Stdout)
+}
+
+func sourceLineWords(ctx context.Context, r io.ReadCloser) <-chan []string {
+	ch := make(chan []string)
+
+	go func() {
+		defer func() {
+			r.Close()
+			close(ch)
+		}()
+
+		b := bytes.Buffer{}
+		sc := bufio.NewScanner(r)
+
+		for sc.Scan() {
+			b.Reset()
+			b.Write(sc.Bytes())
+
+			var words []string
+			w := bufio.NewScanner(&b)
+			w.Split(bufio.ScanWords)
+
+			for w.Scan() {
+				words = append(words, w.Text())
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- words:
+			}
+		}
+	}()
+
+	return ch
+}
+
+// each func result is input for next function in the line, func = stage
+// 1.) read from reader, pass to next in line
+func sourceLine(ctx context.Context, r io.ReadCloser) <-chan string {
+	ch := make(chan string)
+
+	go func() {
+		defer func() {
+			r.Close()
+			close(ch)
+		}()
+
+		s := bufio.NewScanner(r)
+
+		for s.Scan() {
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- s.Text():
+			}
+		}
+	}()
+
+	return ch
+}
+
+// 2.) next in line, filtering from previous reader, send to next in line, printer
+func textFilter(ctx context.Context, src <-chan string, filter string) <-chan string {
+	ch := make(chan string)
+
+	go func() {
+		defer close(ch)
+
+		for v := range src {
+			if !strings.Contains(v, filter) {
+				continue
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- v:
+			}
+		}
+	}()
+
+	return ch
+}
+
+// 3.) print filtered data, last in line
+func printer(ctx context.Context, src <-chan string, color int, highlight string, w io.Writer) {
+	const close = "\x1b[39m"
+	open := fmt.Sprintf("\x1b[%dm", color)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case v, ok := <-src:
+			if !ok {
+				return
+			}
+			i := strings.Index(v, highlight)
+			if i == -1 {
+				panic(v)
+			}
+			fmt.Fprint(w, v[:i], open, highlight, close, v[i+len(highlight):], "\n")
 		}
 	}
 }
