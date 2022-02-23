@@ -3,8 +3,8 @@
 * Concurrent, many actions in progress at same time, execution does not have to happen at same time (but it can!)
 * Parallelism, many actions executing at the same time, thanks to multi-core processors
 
-* race-condition, concurrent execution of a function can lead to undesired behavior, errors might not happen
-* data-race, concurrent read + write will crash application
+* race-condition, concurrent execution of a function can lead to undesired behavior, different outputs can happen each time
+* data-race, concurrent read + write, will crash application
 * deadlock, two threads wait for each other to unlock, infinitely waiting for each other
 
 #### goroutine leaking
