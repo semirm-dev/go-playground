@@ -1,7 +1,10 @@
 #### Concurrency vs Parallelism: 
 * Concurrency can be implemented with parallelism (execution at same time) or context switching (not at same time)
 * Concurrent, many actions in progress at same time, execution does not have to happen at same time (but it can!)
-* Parallelism, many actions executing at the same time, thanks to multi-core processors
+* Parallelism, many actions executing at the same time, thanks to multicore processors
+* Goroutines execute in the same address space they were created in
+* Always pass copied variables to goroutine closures, otherwise same variable/memory will be placed on heap and overwritten
+* Goroutines, if not closed/returned properly will hang around (leak) until the process exits
 
 * race-condition, undesired behavior, logical incorrectness, different outputs can happen each time
 * data-race, concurrent read + write, will crash application
