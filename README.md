@@ -6,7 +6,7 @@
 * Always pass copied variables to goroutine closures, otherwise same variable/memory will be placed on heap and overwritten
 * Goroutines, if not closed/returned properly will hang around (leak) until the process exits
 
-* race-condition, undesired behavior, logical incorrectness, different outputs can happen each time
+* race-condition, logical incorrectness, nondeterministic order leads to different output each time
 * data-race, concurrent read + write, will crash application
 * deadlock, two threads wait for each other to unlock, infinitely waiting for each other
 
