@@ -1,3 +1,8 @@
+* $GOROOT -> go bin/command location
+* $GOPATH -> ~/go, used for go command (go install, go get...)
+* go install -> ~/go/bin (from gopath), installed go binaries
+* go get -> ~/go/pkg/mod (from gopath), downloaded go modules (imported packages)
+
 #### Concurrency vs Parallelism: 
 * Concurrency can be implemented with parallelism (execution at same time) or context switching (not at same time)
 * Concurrent, many actions in progress at same time, execution does not have to happen at same time (but it can!)
@@ -8,7 +13,7 @@
 
 * race-condition, logical incorrectness, nondeterministic order leads to different output each time
 * data-race, concurrent read + write, will crash application
-* deadlock, two threads wait for each other to unlock, infinitely waiting for each other
+* deadlock, two threads wait for each other to unlock, infinitely waiting for each other (mutex)
 
 #### goroutine leaking
 When a goroutine hangs without returning, the space in memory
