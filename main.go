@@ -20,8 +20,89 @@ import (
 
 // As of Go 1.8, garbage collection pauses are generally between 10 and 100 microseconds!
 
+type A struct {
+	Val string
+}
+
+func modPtr(a *A, wg *sync.WaitGroup) {
+	defer wg.Done()
+	a.Val = "changed"
+}
+
+func mod(a A, wg *sync.WaitGroup) {
+	defer wg.Done()
+	a.Val = "changed"
+}
+
+func modPtr2(a *A, wg *sync.WaitGroup) {
+	defer wg.Done()
+	aa := a
+	aa.Val = "oops"
+}
+
+func mod2(a A, wg *sync.WaitGroup) {
+	defer wg.Done()
+	aa := a
+	aa.Val = "oops"
+}
+
 func main() {
 	logrus.Info("playground")
+
+	dataRace()
+}
+
+func dataRace() {
+	a := &A{
+		Val: "abc",
+	}
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1000)
+	for i := 0; i < 1000; i++ {
+		// data-race because passed a is pointer
+		//go func(a *A, wg *sync.WaitGroup) {
+		//	defer wg.Done()
+		//	a.Val = "a"
+		//}(a, &wg)
+
+		// no data-race because passed a is value (not pointer)
+		//go func(a A, wg *sync.WaitGroup) {
+		//	defer wg.Done()
+		//	a.Val = "a"
+		//}(*a, &wg)
+
+		// data-race because passed a is pointer
+		//go modPtr(a, &wg)
+
+		// no data-race because passed a is value (not pointer)
+		//go mod(*a, &wg)
+
+		// data-race because aa holds pointer of a
+		//go func(a *A, wg *sync.WaitGroup) {
+		//	defer wg.Done()
+		//
+		//	aa := a
+		//	aa.Val = "oops"
+		//}(a, &wg)
+
+		// no data-race because aa holds value of a (not pointer)
+		//go func(a A, wg *sync.WaitGroup) {
+		//	defer wg.Done()
+		//
+		//	aa := a
+		//	aa.Val = "oops"
+		//}(*a, &wg)
+
+		// data-race because aa holds pointer of a
+		//go modPtr2(a, &wg)
+
+		// no data-race because aa holds value of a (not pointer
+		go mod2(*a, &wg)
+	}
+
+	wg.Wait()
 }
 
 func arrr() {
