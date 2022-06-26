@@ -73,7 +73,7 @@ func dataRace() {
 
 	wg.Add(1000)
 	// pass by value will never cause data-race, unless inner struct is pointer and changing it!!
-	// pass by pointer will always cause data-race, even for inner structs!
+	// pass by pointer will always cause data-race, even for inner structs which are not pointer!!
 	for i := 0; i < 1000; i++ {
 		// data-race because passed a is pointer
 		//go func(a *A, wg *sync.WaitGroup) {
