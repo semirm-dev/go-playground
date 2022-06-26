@@ -24,6 +24,11 @@ type A struct {
 	Val string
 }
 
+type B struct {
+	AA *A
+	AB A
+}
+
 func modPtr(a *A, wg *sync.WaitGroup) {
 	defer wg.Done()
 	a.Val = "changed"
@@ -55,6 +60,13 @@ func main() {
 func dataRace() {
 	a := &A{
 		Val: "abc",
+	}
+
+	b := &B{
+		AA: a,
+		AB: A{
+			Val: "bcd",
+		},
 	}
 
 	wg := sync.WaitGroup{}
@@ -99,7 +111,34 @@ func dataRace() {
 		//go modPtr2(a, &wg)
 
 		// no data-race because aa holds value of a (not pointer
-		go mod2(*a, &wg)
+		//go mod2(*a, &wg)
+
+		go func(b *B, wg *sync.WaitGroup) {
+			defer wg.Done()
+
+			// data-race, b is pointer
+			//b.AA.Val = "uh"
+
+			// data-race, b is pointer
+			//b.AA = &A{
+			//	Val: "trs",
+			//}
+
+			// data-race, aa is pointer of b.AA -> b is pointer!!
+			//aa := b.AA
+			//aa.Val = "pfw"
+
+			// no data-race, aa holds value of b.AA, AA is not pointer - dereference!!
+			//aa := *b.AA
+			//aa.Val = "s"
+
+			// data-race, b is pointer!!! doesnt matter if AB is not pointer, we still change b!
+			//b.AB.Val = "f"
+
+			// no data-race, ab holds value of b.AB, AB is not pointer!
+			//ab := b.AB
+			//ab.Val = "tr"
+		}(b, &wg)
 	}
 
 	wg.Wait()
