@@ -72,6 +72,8 @@ func dataRace() {
 	wg := sync.WaitGroup{}
 
 	wg.Add(1000)
+	// pass by value will never cause data-race, unless inner struct is pointer and changing it!!
+	// pass by pointer will always cause data-race, even for inner structs!
 	for i := 0; i < 1000; i++ {
 		// data-race because passed a is pointer
 		//go func(a *A, wg *sync.WaitGroup) {
@@ -85,11 +87,15 @@ func dataRace() {
 		//	a.Val = "a"
 		//}(*a, &wg)
 
+		// ---
+
 		// data-race because passed a is pointer
 		//go modPtr(a, &wg)
 
 		// no data-race because passed a is value (not pointer)
 		//go mod(*a, &wg)
+
+		// ---
 
 		// data-race because aa holds pointer of a
 		//go func(a *A, wg *sync.WaitGroup) {
@@ -107,38 +113,50 @@ func dataRace() {
 		//	aa.Val = "oops"
 		//}(*a, &wg)
 
+		// ---
+
 		// data-race because aa holds pointer of a
 		//go modPtr2(a, &wg)
 
 		// no data-race because aa holds value of a (not pointer
 		//go mod2(*a, &wg)
 
-		go func(b *B, wg *sync.WaitGroup) {
+		//go func(b *B, wg *sync.WaitGroup) {
+		//	defer wg.Done()
+		//
+		//	// data-race, b is pointer, we still change b!
+		//	//b.AA.Val = "uh"
+		//
+		//	// data-race, b is pointer, we still change b!
+		//	//b.AA = &A{
+		//	//	Val: "trs",
+		//	//}
+		//
+		//	// data-race, aa is pointer of b.AA -> b is pointer!! we still change b!
+		//	//aa := b.AA
+		//	//aa.Val = "pfw"
+		//
+		//	// data-race, b is pointer!!! doesnt matter if AB is not pointer, we still change b!
+		//	//b.AB.Val = "f"
+		//
+		//	// no data-race, aa holds value of b.AA, AA is not pointer - dereference!!
+		//	//aa := *b.AA
+		//	//aa.Val = "s"
+		//
+		//	// no data-race, ab holds value of b.AB, AB is not pointer!
+		//	//ab := b.AB
+		//	//ab.Val = "tr"
+		//}(b, &wg)
+
+		go func(b B, wg *sync.WaitGroup) {
 			defer wg.Done()
 
-			// data-race, b is pointer
-			//b.AA.Val = "uh"
+			// data-race, b.AA is pointer
+			//b.AA.Val = "wv"
 
-			// data-race, b is pointer
-			//b.AA = &A{
-			//	Val: "trs",
-			//}
-
-			// data-race, aa is pointer of b.AA -> b is pointer!!
-			//aa := b.AA
-			//aa.Val = "pfw"
-
-			// no data-race, aa holds value of b.AA, AA is not pointer - dereference!!
-			//aa := *b.AA
-			//aa.Val = "s"
-
-			// data-race, b is pointer!!! doesnt matter if AB is not pointer, we still change b!
-			//b.AB.Val = "f"
-
-			// no data-race, ab holds value of b.AB, AB is not pointer!
-			//ab := b.AB
-			//ab.Val = "tr"
-		}(b, &wg)
+			// no data-race, b.AB is not pointer
+			b.AB.Val = "fw"
+		}(*b, &wg)
 	}
 
 	wg.Wait()
