@@ -37,12 +37,6 @@ the GC only when the goroutine returns or panics.
 - goroutine stack size starts at 2kb and grows/shrinks, after func return stack is cleaned and returned value is copied to caller
 - both storages (stack and heap) will clean a variable when it is no longer needed
 
-#### architecture
-* most inner circle, business logic, interfaces, knows absolutely nothing about any other component
-* middle circle, use case, uses most inner circle interfaces to apply some business logic
-* adapters, most outer circle, implement most inner circle, knows about other components, replace-able
-* dependency always points inwards, inner circle must never know anything about outer circle (world)
-
 #### SOLID
 *S
 Module -> source file
@@ -91,6 +85,3 @@ This is *I for components
 - start at business rules, problems
 - leave database, ui, frameworks, all aside, focus on the problem being solved!
 - the less you depend on database, ui, frameworks, the more decoupled system you have
-- entity -> high severity, business critical rules, data, knows nothing about usecases
-- usecase -> low severity, application rules, input, output, ref to entity, knows about entities, they know nothing about web!
-- try to not modify existing functions, add new modified versions (v2) instead
