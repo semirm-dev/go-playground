@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
-	"io/ioutil"
+
 	"math/rand"
 	"net/http"
 	"os"
@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-// As of Go 1.8, garbage collection pauses are generally between 10 and 100 microseconds!
+
 
 type A struct {
 	Val string
@@ -49,12 +49,6 @@ func mod2(a A, wg *sync.WaitGroup) {
 	defer wg.Done()
 	aa := a
 	aa.Val = "oops"
-}
-
-func main() {
-	logrus.Info("playground")
-
-	dataRace()
 }
 
 func dataRace() {
@@ -253,7 +247,7 @@ type impl struct{}
 func (i *impl) run() {}
 
 func run(r runner) {
-	var i interface{} = r
+	var i any = r
 
 	switch i.(type) {
 	case int:
@@ -326,7 +320,7 @@ func memSyncEx() {
 func condEx() {
 	// when two or more goroutines wait for signals to occur
 	c := sync.NewCond(&sync.Mutex{})
-	queue := make([]interface{}, 0, 10)
+	queue := make([]any, 0, 10)
 
 	removeFromQueue := func(msg string) {
 		c.L.Lock()
@@ -493,7 +487,7 @@ func channelsEx() {
 
 	// ###################################
 
-	runner := make(chan interface{})
+	runner := make(chan any)
 	var wg sync.WaitGroup
 
 	for i := 0; i < 5; i++ {
@@ -591,8 +585,8 @@ func leakingGoroutineEx() {
 	// it is also responsible for ensuring it can stop the goroutine
 
 	// Leaking example
-	doSmtn := func(strings <-chan string) <-chan interface{} {
-		completed := make(chan interface{})
+	doSmtn := func(strings <-chan string) <-chan any {
+		completed := make(chan any)
 		defer fmt.Println("doSmtn exited")
 
 		go func() {
@@ -618,11 +612,11 @@ func leakingGoroutineEx() {
 	// End
 
 	// pass done <-chan so we can get notified/signaled to stop
-	doWork := func(done <-chan interface{}, strings <-chan string) <-chan interface{} {
+	doWork := func(done <-chan any, strings <-chan string) <-chan any {
 		// without terminated chan, we could not "block" main/parent goroutine,
 		// it would exit before this clojure completes its job
 		// this way main/parent goroutine knows there is a pending/running gorouting, so wait for it
-		terminated := make(chan interface{})
+		terminated := make(chan any)
 		defer fmt.Println("doWork exited")
 
 		go func() {
@@ -649,7 +643,7 @@ func leakingGoroutineEx() {
 		return terminated
 	}
 
-	done := make(chan interface{})
+	done := make(chan any)
 	terminated := doWork(done, nil)
 
 	go func() {
@@ -667,7 +661,7 @@ func leakingGoroutineEx() {
 
 	fmt.Println()
 
-	newRandStream := func(done <-chan interface{}) <-chan int {
+	newRandStream := func(done <-chan any) <-chan int {
 		randStream := make(chan int)
 
 		go func() {
@@ -687,7 +681,7 @@ func leakingGoroutineEx() {
 		return randStream
 	}
 
-	done = make(chan interface{})
+	done = make(chan any)
 	randStream := newRandStream(done)
 
 	for i := 1; i <= 3; i++ {
@@ -703,7 +697,7 @@ func leakingGoroutineEx() {
 
 // concurrent function body
 func chanEx1() {
-	download := func(done <-chan interface{}) <-chan int {
+	download := func(done <-chan any) <-chan int {
 		result := make(chan int)
 
 		go func() {
@@ -728,7 +722,7 @@ func chanEx1() {
 	// Usage of download():
 	// Since we call download() we make sure we close it too
 	// We do so by passing done chan to download(), which is then handled in download()
-	done := make(chan interface{})
+	done := make(chan any)
 
 	received := download(done)
 
@@ -769,7 +763,7 @@ func chanEx3() {
 		Response *http.Response
 	}
 
-	checkStatus := func(done <-chan interface{}, urls ...string) <-chan Result {
+	checkStatus := func(done <-chan any, urls ...string) <-chan Result {
 		results := make(chan Result)
 
 		go func() {
@@ -792,7 +786,7 @@ func chanEx3() {
 		return results
 	}
 
-	done := make(chan interface{})
+	done := make(chan any)
 	urls := []string{"https://www.google.com", "https://badhost"}
 
 	for result := range checkStatus(done, urls...) {
@@ -808,8 +802,8 @@ func chanEx3() {
 // generator for a pipeline is any function that converts a set of discrete values into a stream of values on a channel
 func chanEx4() {
 	// this function will repeat func call you pass in infinitely until you tell it to stop
-	repeat := func(done <-chan interface{}, fn func() interface{}) <-chan interface{} {
-		outStream := make(chan interface{})
+	repeat := func(done <-chan any, fn func() any) <-chan any {
+		outStream := make(chan any)
 
 		go func() {
 			defer close(outStream)
@@ -827,8 +821,8 @@ func chanEx4() {
 	}
 
 	// take first n values from readStream
-	take := func(done <-chan interface{}, readStream <-chan interface{}, n int) <-chan interface{} {
-		outStream := make(chan interface{})
+	take := func(done <-chan any, readStream <-chan any, n int) <-chan any {
+		outStream := make(chan any)
 
 		go func() {
 			defer close(outStream)
@@ -846,8 +840,8 @@ func chanEx4() {
 		return outStream
 	}
 
-	done := make(chan interface{})
-	repeated := repeat(done, func() interface{} {
+	done := make(chan any)
+	repeated := repeat(done, func() any {
 		return rand.Int()
 	})
 
@@ -1141,7 +1135,7 @@ func bufbuf() {
 
 func ctxx() {
 	ctx := context.Background()
-	src := sourceLine(ctx, ioutil.NopCloser(strings.NewReader("some random text")))
+	src := sourceLine(ctx, io.NopCloser(strings.NewReader("some random text")))
 	filter := textFilter(ctx, src, "some")
 	printer(ctx, filter, 31, "some", os.Stdout)
 }
