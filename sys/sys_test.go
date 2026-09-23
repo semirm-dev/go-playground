@@ -43,11 +43,17 @@ var (
 	sinkBytes []byte
 )
 
-// createBenchFile prepares a temporary file fixture for repeatable, isolated benchmarks.
+// createBenchFile prepares a temporary file fixture inside .tmp/ for repeatable benchmarks.
 func createBenchFile(b *testing.B, size int) string {
 	b.Helper()
-	dir := b.TempDir()
-	path := filepath.Join(dir, "bench_data.txt")
+
+	// Ensure the local .tmp directory exists
+	tmpDir := ".tmp"
+	if err := os.MkdirAll(tmpDir, 0755); err != nil {
+		b.Fatalf("failed to create .tmp directory: %v", err)
+	}
+
+	path := filepath.Join(tmpDir, "bench_data.txt")
 
 	line := "ts=2026-09-23T12:00:00Z level=INFO msg=order_matched price=104.25 qty=50\n"
 	repeats := size / len(line)
@@ -56,6 +62,12 @@ func createBenchFile(b *testing.B, size int) string {
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		b.Fatalf("failed to create benchmark fixture: %v", err)
 	}
+
+	// Optional cleanup: removes the file when the benchmark finishes
+	b.Cleanup(func() {
+		_ = os.Remove(path)
+	})
+
 	return path
 }
 
