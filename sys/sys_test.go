@@ -9,10 +9,10 @@ import (
 	"github.com/semirm-dev/go-playground/sys"
 )
 
-// BenchmarkReadAll-32    1280    916788 ns/op     5718.75 MB/s   11042754 B/op   31 allocs/op
-// BenchmarkReadBuff-32   1033   1118089 ns/op     4689.14 MB/s   16744641 B/op   12 allocs/op
-// BenchmarkReadChunk-32  4905    237514 ns/op    22074.01 MB/s        168 B/op    3 allocs/op
-// BenchmarkReadBufio-32  1125   1075612 ns/op     4874.32 MB/s       4264 B/op    4 allocs/op
+// BenchmarkReadAll-32                 1383            993329 ns/op        5278.09 MB/s    11042718 B/op         31 allocs/op
+// BenchmarkReadBuff-32                 860           1380749 ns/op        3797.13 MB/s    16744606 B/op         12 allocs/op
+// BenchmarkReadChunk-32               7803            146297 ns/op        35837.23 MB/s        128 B/op          3 allocs/op
+// BenchmarkReadBufio-32               1117           1064850 ns/op        4923.59 MB/s        4224 B/op          4 allocs/op
 
 // # Go I/O Benchmark Analysis
 

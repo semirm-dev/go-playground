@@ -103,10 +103,9 @@ func ReadAll(path string) ([]byte, error) {
 }
 
 // 1. bytes.Buffer.ReadFrom
-// Best for: Slurping an entire dynamic/unknown stream into memory with buffer pooling (e.g., HTTP request bodies).
-// Why: Replaces io.ReadAll. It drains an io.Reader to EOF in a single call, dynamically grows
-// its internal buffer only when necessary, and preserves capacity across buff.Reset() cycles.
-// Warning: May allocate a lot of memory if the stream is large.
+// Best for: Reading an entire stream of unknown size into memory in a single call.
+// Why: Avoids io.ReadAll's small 512B start by allowing upfront capacity via buf.Grow().
+// Warning: Allocates per call without a sync.Pool/external buffer; incurs geometric slice doubling if the stream exceeds initial capacity.
 func ReadBuff(path string) ([]byte, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -117,7 +116,6 @@ func ReadBuff(path string) ([]byte, error) {
 	var buf bytes.Buffer
 	buf.Grow(32 * 1024) // Pre-allocate the 32 KB capacity upfront!
 
-	buf.Reset()              // Resets len to 0, retains 32 KB cap
 	_, err = buf.ReadFrom(f) // No for-loop needed! ReadFrom automatically reads to EOF
 	if err != nil {
 		return nil, err
