@@ -10,8 +10,8 @@ import (
 )
 
 // BenchmarkReadAll-32    1280    916788 ns/op     5718.75 MB/s   11042754 B/op   31 allocs/op
-// BenchmarkReadChunk-32  4905    237514 ns/op    22074.01 MB/s        168 B/op    3 allocs/op
 // BenchmarkReadBuff-32   1033   1118089 ns/op     4689.14 MB/s   16744641 B/op   12 allocs/op
+// BenchmarkReadChunk-32  4905    237514 ns/op    22074.01 MB/s        168 B/op    3 allocs/op
 // BenchmarkReadBufio-32  1125   1075612 ns/op     4874.32 MB/s       4264 B/op    4 allocs/op
 
 // # Go I/O Benchmark Analysis
@@ -86,21 +86,7 @@ func BenchmarkReadAll(b *testing.B) {
 	}
 }
 
-// 2. BenchmarkReadChunk: Direct fixed 32 KB chunk streaming (near-zero heap allocations).
-func BenchmarkReadChunk(b *testing.B) {
-	filePath := createBenchFile(b, benchFileSize)
-	b.SetBytes(benchFileSize)
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for b.Loop() {
-		if err := sys.ReadChunk(filePath); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
-
-// 3. BenchmarkReadBuff: Reusable bytes.Buffer slurp to EOF with buffer pre-allocation.
+// 2. BenchmarkReadBuff: Reusable bytes.Buffer slurp to EOF with buffer pre-allocation.
 func BenchmarkReadBuff(b *testing.B) {
 	filePath := createBenchFile(b, benchFileSize)
 	b.SetBytes(benchFileSize)
@@ -113,6 +99,20 @@ func BenchmarkReadBuff(b *testing.B) {
 			b.Fatal(err)
 		}
 		sinkBytes = data
+	}
+}
+
+// 3. BenchmarkReadChunk: Direct fixed 32 KB chunk streaming (near-zero heap allocations).
+func BenchmarkReadChunk(b *testing.B) {
+	filePath := createBenchFile(b, benchFileSize)
+	b.SetBytes(benchFileSize)
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for b.Loop() {
+		if err := sys.ReadChunk(filePath); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 

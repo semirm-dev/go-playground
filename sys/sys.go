@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"os"
-
 )
 
 // each write/read is system call, make as little as possible such system calls - use buffers
@@ -92,6 +91,7 @@ import (
 
 // ------------------------------------------------------------
 
+// 0. io.ReadAll
 func ReadAll(path string) ([]byte, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -102,7 +102,31 @@ func ReadAll(path string) ([]byte, error) {
 	return io.ReadAll(f)
 }
 
-// 1. Direct File Read into Fixed Buffer.
+// 1. bytes.Buffer.ReadFrom
+// Best for: Slurping an entire dynamic/unknown stream into memory with buffer pooling (e.g., HTTP request bodies).
+// Why: Replaces io.ReadAll. It drains an io.Reader to EOF in a single call, dynamically grows
+// its internal buffer only when necessary, and preserves capacity across buff.Reset() cycles.
+// Warning: May allocate a lot of memory if the stream is large.
+func ReadBuff(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var buf bytes.Buffer
+	buf.Grow(32 * 1024) // Pre-allocate the 32 KB capacity upfront!
+
+	buf.Reset()              // Resets len to 0, retains 32 KB cap
+	_, err = buf.ReadFrom(f) // No for-loop needed! ReadFrom automatically reads to EOF
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// 2. Direct File Read into Fixed Buffer.
 // Best for: High-throughput raw binary streaming, file copies, large/unknown streams, and chunked processing.
 // Why: Zero allocation in the loop; performs direct syscalls straight into your user-space
 // slice without intermediate buffer copies. Sizing to 32 KB-64 KB hits optimal OS/disk throughput.
@@ -131,30 +155,6 @@ func ReadChunk(path string) error {
 	}
 
 	return nil
-}
-
-// 2. bytes.Buffer.ReadFrom
-// Best for: Slurping an entire dynamic/unknown stream into memory with buffer pooling (e.g., HTTP request bodies).
-// Why: Replaces io.ReadAll. It drains an io.Reader to EOF in a single call, dynamically grows
-// its internal buffer only when necessary, and preserves capacity across buff.Reset() cycles.
-// Warning: May allocate a lot of memory if the stream is large.
-func ReadBuff(path string) ([]byte, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var buf bytes.Buffer
-	buf.Grow(32 * 1024) // Pre-allocate the 32 KB capacity upfront!
-
-	buf.Reset()              // Resets len to 0, retains 32 KB cap
-	_, err = buf.ReadFrom(f) // No for-loop needed! ReadFrom automatically reads to EOF
-	if err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }
 
 // 3. bufio.Reader.ReadSlice
