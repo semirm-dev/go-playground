@@ -5,9 +5,6 @@ Memory is a long row of **1-byte cells**. An address is the cell's index, and ad
 **The smallest addressable unit is 1 byte = 8 bits = 2 hex digits**, so every cell holds `0x00`–`0xFF` (0–255). A single bit has no address of its own. To change one bit, the CPU reads the whole byte, changes the bit, and writes the byte back.
 
 ```
- address (full width, 16 hex digits on 64-bit)     value (1 byte = 2 hex digits)
- 0x000000C000012340  ───────────────────────────►  48
- 0x000000C000012341  ───────────────────────────►  69
  Each 0 is 1 hex => which is 0000 (4bits):
  64bit architecture: 00 00 00 00 00 00 00 00    ← 8 bytes, 2 hex digits each, 8 * 2 = 16hex * 4bits each = 64bit architecture
  32bit architecture: 00 00 00 00                ← 4 bytes, 2 hex digits each, 4 * 2 = 8hex * 4bits each = 32bit architecture
@@ -19,12 +16,20 @@ hex:       0    0    0    0    0    0    C    0    0    0    0    1    2    3   
          → 0x000000C000012340
 ```
 ```
-p (a pointer) = 8 cells × 2 hex digits = 16 hex digits = full address width (8bytes/16hex on 64bits, 4bytes/8hex on 32bits)
+1 hex = 4 bits
+p* (a pointer) = 8 cells × 2 hex digits = 16 hex digits = full address width (8bytes/16hex on 64bits, 4bytes/8hex on 32bits)
+
 64bit example:
 ┌────┬────┬────┬────┬────┬────┬────┬────┐
 │ 00 │ 00 │ 00 │ C0 │ 00 │ 01 │ 23 │ 40 │   → 0x000000C000012340
 └────┴────┴────┴────┴────┴────┴────┴────┘
  1B   1B   1B   1B   1B   1B   1B   1B
+
+32bit example:
+┌────┬────┬────┬────┐
+│ C0 │ 01 │ 23 │ 40 │   → 0xC0012340
+└────┴────┴────┴────┘
+ 1B   1B   1B   1B
 ```
 
 ## The key chain: 1 hex digit = 4 bits
