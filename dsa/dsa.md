@@ -25,6 +25,8 @@ Passing an algorithmic interview requires a different mental model than building
 
 **Code layout in this repo:** structures go in `dsa/`, problem solutions go in `leetcode/`.
 
+**Day-by-day schedule:** see [plan.md](plan.md).
+
 ---
 
 ## 🧠 Phase 0 → 1: Foundations (Week 1, before the structures)
