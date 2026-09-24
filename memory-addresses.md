@@ -13,6 +13,20 @@ Memory is a long row of **1-byte cells**. An address is the cell's index, and ad
  32bit architecture: 00 00 00 00                ← 4 bytes, 2 hex digits each, 4 * 2 = 8hex * 4bits each = 32bit architecture
 ```
 
+```
+binary: 0000 0000 0000 0000 0000 0000 1100 0000 0000 0000 0000 0001 0010 0011 0100 0000
+hex:       0    0    0    0    0    0    C    0    0    0    0    1    2    3    4    0
+         → 0x000000C000012340
+```
+```
+p (a pointer) = 8 cells × 2 hex digits = 16 hex digits = full address width (8bytes/16hex on 64bits, 4bytes/8hex on 32bits)
+64bit example:
+┌────┬────┬────┬────┬────┬────┬────┬────┐
+│ 00 │ 00 │ 00 │ C0 │ 00 │ 01 │ 23 │ 40 │   → 0x000000C000012340
+└────┴────┴────┴────┴────┴────┴────┴────┘
+ 1B   1B   1B   1B   1B   1B   1B   1B
+```
+
 ## The key chain: 1 hex digit = 4 bits
 
 ```
