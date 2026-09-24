@@ -12,7 +12,7 @@ This roadmap starts with **foundations built from scratch**, then works through 
 
 | Stage | Weeks | Focus | Pace |
 | :--- | :--- | :--- | :--- |
-| **Phase 1** | 1-2 | Big-O, recursion, sorting, 10 structures from scratch | 1-2 structures / day |
+| **Phase 1** | 1-2 | Big-O, recursion, sorting, 12 structures from scratch | 1-2 structures / day |
 | **Phase 2** | 3-4 | Arrays, two pointers, windows, stacks, binary search, lists | 3 problems / day |
 | **Phase 3** | 5-6 | Trees, tries, heaps, backtracking, graphs | 2-3 problems / day |
 | **Phase 4** | 7-8 | Advanced graphs, DP, greedy, intervals, bits, math | 3-4 problems / day |
@@ -96,26 +96,28 @@ No LeetCode yet. Use only raw Go primitives and pointers — no external librari
 * **Hash Map:** buckets + a hash function (e.g. FNV-1a), collisions via chaining or open addressing, resize past a load factor. O(1) on average because the table is kept sparse on purpose.
 * **Stack:** on your dynamic array — `.Push()`, `.Pop()`, `.Peek()`. Any recursive algorithm can be rewritten with an explicit stack.
 * **Queue:** a ring buffer over a fixed array (head/tail wrapping with modulo). Allocates nothing after creation; used in event loops, channels, network buffers.
+* **Deque:** extend the ring buffer to push/pop at both ends. Needed for monotonic-deque problems (239 Sliding Window Maximum) and 0-1 BFS.
 
 - [ ] **Mon:** Big-O — write down the complexity of 10 small Go snippets. Recursion: factorial, power, reverse a string.
 - [ ] **Tue:** Fibonacci naive → memoized; draw the recursion tree for `fib(5)`. Insertion Sort + Merge Sort.
 - [ ] **Wed:** Quick Sort (Lomuto or Hoare partition); fuzz all three sorts against `slices.Sort`. Dynamic Array.
 - [ ] **Thu:** Singly Linked List + Doubly Linked List.
 - [ ] **Fri:** Hash Map: Put/Get/Delete, collisions, resizing. Fuzz against Go's `map`.
-- [ ] **Sat:** Stack + Queue (ring buffer).
+- [ ] **Sat:** Stack + Queue (ring buffer) + Deque.
 
-### Week 2 — Trees, Heap, Trie, Union-Find
+### Week 2 — Trees, Heap, Trie, Union-Find, Graphs
 **Learn:** VisuAlgo "BST" and "Binary Heap"; NeetCode's Trie and Union-Find videos.
 
 * **Binary Search Tree:** `.Insert()`, `.Search()`, `.Delete()` (leaf, one child, two children), in-order traversal. An unbalanced BST degrades to a linked list — why real systems use balanced trees (red-black, B-trees).
 * **Min Heap:** a flat slice with `Left = 2i+1`, `Right = 2i+2`, `Parent = (i-1)/2`. `.Push()` (sift up), `.Pop()` (sift down), heapify in O(N). A tree stored in contiguous memory with no pointers.
 * **Trie:** nodes with `children [26]*Node` and `end bool`; `.Insert()`, `.Search()`, `.StartsWith()`. Fixed arrays are fast but waste memory; a map per node is the opposite trade-off.
 * **Union-Find:** `parent []int` + `rank []int`; `.Find()` with path compression, `.Union()` by rank. Near-O(1) operations; essential for connectivity problems and Kruskal's MST.
+* **Graph:** adjacency list (`[][]int` or `map[int][]int`) built from an edge list, plus BFS and DFS with a `visited` set. Grids are graphs too: traverse with direction vectors `{{1,0},{-1,0},{0,1},{0,-1}}` and bounds checks.
 
 - [ ] **Mon:** BST: Insert, Search, in-order traversal, Delete.
 - [ ] **Tue:** Min Heap: Push/Pop/heapify. Fuzz: push N values, pop all, result must be sorted.
 - [ ] **Wed:** Trie + Union-Find.
-- [ ] **Thu:** Tree traversals both ways: recursive and iterative (your stack for DFS, your queue for BFS).
+- [ ] **Thu:** Tree traversals both ways: recursive and iterative (your stack for DFS, your queue for BFS). Graph: adjacency list + BFS/DFS, and the same on a 2-D grid.
 - [ ] **Fri:** Go tools you'll use on LeetCode: `slices`, `sort`, `container/heap`, `strings.Builder`, `math.MaxInt`. Write a tiny example of each.
 - [ ] **Sat:** 🏁 **Checkpoint:** from blank files, in 90 min: Dynamic Array, Hash Map, Heap — all tests pass.
 
