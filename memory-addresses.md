@@ -8,6 +8,8 @@ Memory is a long row of **1-byte cells**. An address is the cell's index, and ad
  address (full width, 16 hex digits on 64-bit)     value (1 byte = 2 hex digits)
  0x000000C000012340  ───────────────────────────►  48
  0x000000C000012341  ───────────────────────────►  69
+ 64bit architecture: 00 00 00 00 00 00 00 00    ← 8 bytes, 2 hex digits each, 8 * 2 = 16hex * 4bits each = 64bit architecture
+ 32bit architecture: 00 00 00 00                ← 4 bytes, 2 hex digits each, 4 * 2 = 8hex * 4bits each = 32bit architecture
 ```
 
 ## The key chain: 1 hex digit = 4 bits
