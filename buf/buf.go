@@ -63,7 +63,7 @@ func copyPooled(dst io.Writer, src io.Reader) (int64, error) {
 
 // ## -------------------------------------------------------------------------------------------------------------------------------- ##
 
-// ## BufferPool
+// ## BufferPool - dynamic size buffers
 // Holds `*bytes.Buffer` values whose size varies. Use it to build output: JSON, CSV, templates, request bodies.
 
 // BufferPool pools *bytes.Buffer values and drops any buffer that grew
@@ -89,13 +89,13 @@ func (p *BufferPool) Get() *bytes.Buffer {
 
 func (p *BufferPool) Put(b *bytes.Buffer) {
 	if b.Cap() > p.maxCap {
-		return
+		return // too big to keep; drop it and let GC free it
 	}
 	b.Reset()
 	p.pool.Put(b)
 }
 
-// ## BytePool
+// ## BytePool - fixed-size scratch buffers
 // Holds fixed-size `[]byte` scratch buffers. Use it to stream data with `io.CopyBuffer` or a `Read` loop.
 
 // BytePool pools fixed-size byte slices. It stores *[]byte because
