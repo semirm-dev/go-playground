@@ -91,40 +91,7 @@ import (
 
 // ------------------------------------------------------------
 
-// 0. io.ReadAll
-func ReadAll(path string) ([]byte, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	return io.ReadAll(f)
-}
-
-// 1. bytes.Buffer.ReadFrom
-// Best for: Reading an entire stream of unknown size into memory in a single call.
-// Why: Avoids io.ReadAll's small 512B start by allowing upfront capacity via buf.Grow().
-// Warning: Allocates per call without a sync.Pool/external buffer; incurs geometric slice doubling if the stream exceeds initial capacity.
-func ReadBuff(path string) ([]byte, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var buf bytes.Buffer
-	buf.Grow(32 * 1024) // Pre-allocate the 32 KB capacity upfront!
-
-	_, err = buf.ReadFrom(f) // No for-loop needed! ReadFrom automatically reads to EOF
-	if err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-// 2. Direct File Read into Fixed Buffer.
+// 1. Raw bytes buffer - zero allocation, read into fixed buffer.
 // Best for: High-throughput raw binary streaming, file copies, large/unknown streams, and chunked processing.
 // Why: Zero allocation in the loop; performs direct syscalls straight into your user-space
 // slice without intermediate buffer copies. Sizing to 32 KB-64 KB hits optimal OS/disk throughput.
@@ -155,7 +122,7 @@ func ReadChunk(path string) error {
 	return nil
 }
 
-// 3. bufio.Reader.ReadSlice
+// 2. bufio.Reader.ReadSlice - reduce system calls, tokenized parsing, lookup.
 // Best for: Ultra-high-performance line or token parsing where you cannot afford heap allocations (e.g., hot market feeds, log ingestion).
 // Why: Returns a slice referencing bufio's internal buffer directly (zero heap alloc).
 // Warning: The slice is invalidated and overwritten on the next call; returns ErrBufferFull if the delimiter isn't found within buffer capacity.
@@ -222,7 +189,40 @@ func ReadBufio(path string) error {
 	return nil
 }
 
-// 4. io.Pipe (pr, pw)
+// 3. bytes.Buffer.ReadFrom - dynamic payload, bridging io interfaces
+// Best for: Reading an entire stream of unknown size into memory in a single call.
+// Why: Avoids io.ReadAll's small 512B start by allowing upfront capacity via buf.Grow().
+// Warning: Allocates per call without a sync.Pool/external buffer; incurs geometric slice doubling if the stream exceeds initial capacity.
+func ReadBuff(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var buf bytes.Buffer
+	buf.Grow(32 * 1024) // Pre-allocate the 32 KB capacity upfront!
+
+	_, err = buf.ReadFrom(f) // No for-loop needed! ReadFrom automatically reads to EOF
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// 4. io.ReadAll
+func ReadAll(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return io.ReadAll(f)
+}
+
+// 5. io.Pipe (pr, pw)
 // Rule: Use exclusively when bridging an io.Writer interface (e.g., json.Encoder, gzip.Writer)
 // to an io.Reader interface (e.g., http.Request.Body, s3.PutObject) across goroutines.
 // Note: If you only need to pass data or byte chunks between goroutines inside your own
@@ -250,7 +250,7 @@ func PipeRW() error {
 	return err
 }
 
-// 5. CopyFile reference comment:
+// 6. CopyFile reference comment:
 // Best for: Standard file-to-file duplication.
 // Why: Lets Go select the fastest path available: kernel zero-copy (copy_file_range)
 // on supported platforms, or an internal 32 KB chunk loop fallback.
