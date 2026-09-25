@@ -34,7 +34,7 @@ func Arr() {
 
 	log.Println("-- Remove Last -----------")
 
-	// 1. set nil,  needed for pointers only, clear the element so GC can reclaim the memory
+	// 1. set nil, needed for pointers only, clear the element so GC can reclaim the memory
 	arr[len(arr)-1] = 0
 	log.Println(arr)
 	// 2026/09/25 12:19:11 [2 3 4 5 6 7 8 9 0]
@@ -51,7 +51,7 @@ func Arr() {
 	log.Println(arr)
 	// 2026/09/25 12:19:11 [2 9 4 5 6 7 8 9]
 
-	// 2. set nil,  needed for pointers only, clear the element so GC can reclaim the memory
+	// 2. set nil, needed for pointers only, clear the element so GC can reclaim the memory
 	arr[len(arr)-1] = 0
 	log.Println(arr)
 	// 2026/09/25 12:19:11 [2 9 4 5 6 7 8 0]
@@ -63,17 +63,17 @@ func Arr() {
 
 	log.Println("-- Remove Middle, Ordered -----------")
 
-	// 1. Shift elements left by 1
+	// 1. shift elements left by 1 to override the element to remove
 	copy(arr[1:], arr[1+1:])
 	log.Println(arr)
 	// 2026/09/25 12:19:11 [2 4 5 6 7 8 8]
 
-	// 2. Clear the abandoned tail slot
+	// 2. set nil, needed for pointers only, clear the element so GC can reclaim the memory
 	arr[len(arr)-1] = 0
 	log.Println(arr)
 	// 2026/09/25 12:19:11 [2 4 5 6 7 8 0]
 
-	// 3. Truncate
+	// 3. reslice
 	arr = arr[:len(arr)-1]
 	log.Println(arr)
 	// 2026/09/25 12:19:11 [2 4 5 6 7 8]
