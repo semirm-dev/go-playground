@@ -122,7 +122,29 @@ func ReadChunk(path string) error {
 	return nil
 }
 
-// 2. bufio.Reader.ReadSlice - reduce system calls, tokenized parsing, lookup.
+// 2. bytes.Buffer.ReadFrom - dynamic payload, bridging 'io' interfaces.
+// Best for: Reading an entire stream of unknown size into memory in a single call.
+// Why: Avoids io.ReadAll's small 512B start by allowing upfront capacity via buf.Grow().
+// Warning: Allocates per call without a sync.Pool/external buffer; incurs geometric slice doubling if the stream exceeds initial capacity.
+func ReadBuff(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var buf bytes.Buffer
+	buf.Grow(32 * 1024) // Pre-allocate the 32 KB capacity upfront!
+
+	_, err = buf.ReadFrom(f) // No for-loop needed! ReadFrom automatically reads to EOF
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// 3. bufio.Reader.ReadSlice - reduce system calls, tokenized parsing, lookup.
 // Best for: Ultra-high-performance line or token parsing where you cannot afford heap allocations (e.g., hot market feeds, log ingestion).
 // Why: Returns a slice referencing bufio's internal buffer directly (zero heap alloc).
 // Warning: The slice is invalidated and overwritten on the next call; returns ErrBufferFull if the delimiter isn't found within buffer capacity.
@@ -187,28 +209,6 @@ func ReadBufio(path string) error {
 	}
 
 	return nil
-}
-
-// 3. bytes.Buffer.ReadFrom - dynamic payload, bridging io interfaces
-// Best for: Reading an entire stream of unknown size into memory in a single call.
-// Why: Avoids io.ReadAll's small 512B start by allowing upfront capacity via buf.Grow().
-// Warning: Allocates per call without a sync.Pool/external buffer; incurs geometric slice doubling if the stream exceeds initial capacity.
-func ReadBuff(path string) ([]byte, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var buf bytes.Buffer
-	buf.Grow(32 * 1024) // Pre-allocate the 32 KB capacity upfront!
-
-	_, err = buf.ReadFrom(f) // No for-loop needed! ReadFrom automatically reads to EOF
-	if err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }
 
 // 4. io.ReadAll
