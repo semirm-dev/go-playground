@@ -22,6 +22,10 @@ func Arr() {
 
 	log.Println("-- Remove First -----------")
 
+	// fifo, queue pop / dequeue
+	item := arr[0]
+	log.Println("popped item:", item)
+
 	// 1. set nil,  needed for pointers only, clear the element so GC can reclaim the memory
 	arr[0] = 0
 	log.Println(arr)
@@ -33,6 +37,10 @@ func Arr() {
 	// 2026/09/25 12:19:11 [2 3 4 5 6 7 8 9 10]
 
 	log.Println("-- Remove Last -----------")
+
+	// lifo, stack pop
+	item = arr[len(arr)-1]
+	log.Println("popped item:", item)
 
 	// 1. set nil, needed for pointers only, clear the element so GC can reclaim the memory
 	arr[len(arr)-1] = 0
