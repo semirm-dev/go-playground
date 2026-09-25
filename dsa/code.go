@@ -92,9 +92,9 @@ func Arr() {
 
 func Str() {
 	str := "hello123" // 'hello' = letters, '123' = digits
-	i := 0
-	s := 6
-	log.Println("char 'h' = ", str[i], "(ascii), char 'a' = ", 'a', "(ascii), digit '2' = ", str[s], "(ascii)")
+	s := 0
+	i := 6
+	log.Println("char 'h' = ", str[s], "(ascii), char 'a' = ", 'a', "(ascii), digit '2' = ", str[i], "(ascii)")
 
 	// letter => ascii
 	// 'a' = 97, 'b' = 98, 'c' = 99, ... 'h' = 104, ... 'z' = 122
@@ -105,22 +105,27 @@ func Str() {
 	// 0: 'a', 1: 'b', 2: 'c', ... 7: 'h', ... 25: 'z'
 
 	// letters
-	// ascii - ascii = index (7)
-	// ascii + index = ascii (104) -> then to string(104)
+	// ascii (104) - ascii (97) = index (7)
+	// ascii (97) + index (7) = ascii (104) -> then to string(104)
 
-	// convert letter -> index
-	idx := str[i] - 'a' // 104 - 97 = 7 (index)
-	log.Println("index in alphabet:", idx)
+	// ascii - ascii = index
+	idx := int(str[s] - 'a') // 104 - 97 = 7 (index)
+	log.Println(str[s], "(ascii) -> index:", idx)
 
-	// convert index -> ascii
-	var ch byte = 'a' + idx // 97 + 7 = 104 (ascii)
-	log.Println("ascii:", ch, "-> string:", string(ch))
+	// ascii + index = ascii
+	as := byte('a' + idx) // 97 + 7 = 104 (ascii)
+	log.Println(idx, "(index) -> ascii:", as)
+	log.Println(as, "(ascii) -> string:", string(as))
 
 	// digits
-	// ascii - ascii = digit (2)
-	// ascii + digit = ascii (50)
+	// ascii (50) - ascii (48) = digit (2)
+	// ascii (48) + digit (2) = ascii (50)
 
-	// convert ascii -> digit
-	var d int = int(str[s] - '0')
-	log.Println("'50' (ascii) -> digit:", d) // 50 - 48 = 2 (digit)
+	// ascii - ascii = digit
+	dig := int(str[i] - '0') // 50 - 48 = 2 (digit)
+	log.Println(str[i], "(ascii) -> digit:", dig)
+
+	// ascii + digit = ascii
+	ad := byte('0' + dig) // 48 + 2 = 50 (ascii)
+	log.Println(dig, "(digit) -> ascii:", ad)
 }
