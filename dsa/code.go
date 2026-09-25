@@ -4,6 +4,7 @@ import "log"
 
 func Run() {
 	Arr()
+	Str()
 }
 
 // Big-O measures how execution time or memory footprint scales relative to the input size (n).
@@ -85,4 +86,38 @@ func Arr() {
 	arr = arr[:len(arr)-1]
 	log.Println(arr)
 	// 2026/09/25 12:19:11 [2 4 5 6 7 8]
+
+	log.Println("--------------------------------")
+}
+
+func Str() {
+	str := "hello123" // 'hello' = letters, '123' = digits
+	i := 0
+	s := 6
+	log.Println("char 'h' = ", str[i], "(ascii), char 'a' = ", 'a', "(ascii), digit '2' = ", str[s], "(ascii)")
+
+	// letter => ascii
+	// 'a' = 97, 'b' = 98, 'c' = 99, ... 'h' = 104, ... 'z' = 122
+	// digit => ascii
+	// '0' = 48, '1' = 49, '2' = 50, ... '9' = 57
+
+	// index in alphabet (0-25) => letter
+	// 0: 'a', 1: 'b', 2: 'c', ... 7: 'h', ... 25: 'z'
+	// index in digits (0-9) => digit
+	// 0: '0', 1: '1', 2: '2', 3: '3', ..., 9: '9'
+
+	// index from ascii: 104 - 97 = index => ascii - ascii = index
+	// index to ascii: 97 + index = 104 => ascii + index = ascii
+
+	// convert letter -> index
+	idx := str[i] - 'a' // 104 - 97 = 7 (index)
+	log.Println("index in alphabet:", idx)
+
+	// convert index -> ascii
+	var ch byte = 'a' + idx // 97 + 7 = 104 (ascii)
+	log.Println("ascii:", ch)
+
+	// convert ascii -> digit
+	var d int = int(str[s] - '0')
+	log.Println("'50' (ascii) -> digit:", d)
 }
