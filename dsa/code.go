@@ -103,11 +103,10 @@ func Str() {
 
 	// index in alphabet (0-25) => letter
 	// 0: 'a', 1: 'b', 2: 'c', ... 7: 'h', ... 25: 'z'
-	// index in digits (0-9) => digit
-	// 0: '0', 1: '1', 2: '2', 3: '3', ..., 9: '9'
 
-	// index from ascii: 104 - 97 = index => ascii - ascii = index
-	// index to ascii: 97 + index = 104 => ascii + index = ascii
+	// letters
+	// ascii - ascii = index (7)
+	// ascii + index = ascii (104) -> then to string(104)
 
 	// convert letter -> index
 	idx := str[i] - 'a' // 104 - 97 = 7 (index)
@@ -115,9 +114,13 @@ func Str() {
 
 	// convert index -> ascii
 	var ch byte = 'a' + idx // 97 + 7 = 104 (ascii)
-	log.Println("ascii:", ch)
+	log.Println("ascii:", ch, "-> string:", string(ch))
+
+	// digits
+	// ascii - ascii = digit (2)
+	// ascii + digit = ascii (50)
 
 	// convert ascii -> digit
 	var d int = int(str[s] - '0')
-	log.Println("'50' (ascii) -> digit:", d)
+	log.Println("'50' (ascii) -> digit:", d) // 50 - 48 = 2 (digit)
 }
