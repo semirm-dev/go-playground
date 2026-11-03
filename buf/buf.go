@@ -17,7 +17,7 @@ var (
 )
 
 // BufferPool example:
-// - json.NewEncoder takes an io.Writer, so the pool holds *bytes.Buffer; the buffer grows to fit the payload.
+// - Encode JSON into a pooled *bytes.Buffer; the buffer grows to fit the payload.
 // - Encode first, then write: an encoding error still produces a clean 500,
 // - and the response gets an exact Content-Length.
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -35,7 +35,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 // BytePool example:
-// - io.CopyBuffer takes a []byte, so the pool holds *[]byte; a fixed-size chunk never grows.
+// - Stream through a pooled []byte with io.CopyBuffer; a fixed-size chunk never grows.
 // - Stream without allocating a new buffer on every call.
 func copyPooled(dst io.Writer, src io.Reader) (int64, error) {
 	bp := bytePool.Get()                // Get a buffer from the pool
@@ -66,16 +66,16 @@ func copyPooled(dst io.Writer, src io.Reader) (int64, error) {
 // ## -------------------------------------------------------------------------------------------------------------------------------- ##
 
 // ## Which pool
-// Pick the type by what the API takes, not by the payload size:
-// - The API takes an io.Writer (json.NewEncoder, fmt.Fprintf, template.Execute) -> BufferPool.
-// - The API takes a []byte (Read, io.CopyBuffer) -> BytePool.
+// Pick the pool by the data type you need, not by the payload size:
+// - You need a *bytes.Buffer -> BufferPool.
+// - You need a []byte -> BytePool.
 // Whether a buffer grows decides whether its pool needs a maxCap.
 // An append-style []byte (strconv.AppendInt, time.AppendFormat) grows, so it needs one too.
 
-// ## BufferPool - growing buffers for io.Writer APIs
+// ## BufferPool - growing *bytes.Buffer values
 
-// BufferPool pools *bytes.Buffer values. A *bytes.Buffer is an io.Writer that grows
-// to fit whatever is written, so Put drops any buffer that grew past maxCap,
+// BufferPool pools *bytes.Buffer values. A *bytes.Buffer grows to fit
+// whatever is written, so Put drops any buffer that grew past maxCap,
 // and one huge payload can't pin memory (golang/go#23199).
 type BufferPool struct {
 	pool   sync.Pool
@@ -104,9 +104,9 @@ func (p *BufferPool) Put(b *bytes.Buffer) {
 	p.pool.Put(b)
 }
 
-// ## BytePool - fixed-size buffers for []byte APIs
+// ## BytePool - fixed-size []byte values
 
-// BytePool pools fixed-size byte slices for APIs that take raw memory, not an io.Writer.
+// BytePool pools fixed-size byte slices.
 // The slice never grows, so no maxCap is needed; Put only refuses a slice of another size.
 // It stores *[]byte because putting a plain []byte into `any` allocates (staticcheck SA6002).
 type BytePool struct {

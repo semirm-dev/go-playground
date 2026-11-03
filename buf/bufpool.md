@@ -11,10 +11,10 @@ If any one of these is false, you probably don't need a pool.
 
 ## Which pool
 
-Pick the type by what the API takes, not by the payload size:
+Pick the pool by the data type you need, not by the payload size:
 
-- **The API takes an `io.Writer`** (`json.NewEncoder`, `fmt.Fprintf`, `template.Execute`): pool `*bytes.Buffer`. It is an `io.Writer` that grows to fit the payload.
-- **The API takes a `[]byte`** (`Read`, `io.CopyBuffer`, `strconv.AppendInt`): pool `*[]byte`.
+- **You need a `*bytes.Buffer`:** pool `*bytes.Buffer`. It grows to fit the payload.
+- **You need a `[]byte`:** pool `*[]byte`.
 
 Whether the buffer grows decides whether the pool needs a `maxCap`. A `*bytes.Buffer` and an append-style `[]byte` grow, so both need one. A fixed-size `[]byte` for `Read` or `io.CopyBuffer` never grows, so it doesn't.
 
