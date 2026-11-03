@@ -12,16 +12,17 @@ import (
 // ## Examples
 
 var (
-	buffers = NewBufferPool(0, 64<<10) // 64 KB retain limit
-	scratch = NewBytePool(32 << 10)    // 32 KB copy buffers
+	bufferPool = NewBufferPool(0, 64<<10) // 64 KB retain limit
+	bytePool   = NewBytePool(32 << 10)    // 32 KB copy buffers
 )
 
 // BufferPool example:
+// - json.NewEncoder takes an io.Writer, so the pool holds *bytes.Buffer; the buffer grows to fit the payload.
 // - Encode first, then write: an encoding error still produces a clean 500,
 // - and the response gets an exact Content-Length.
 func writeJSON(w http.ResponseWriter, status int, v any) {
-	buf := buffers.Get()   // Get a buffer from the pool
-	defer buffers.Put(buf) // Put the buffer back in the pool
+	buf := bufferPool.Get()   // Get a buffer from the pool
+	defer bufferPool.Put(buf) // Put the buffer back in the pool
 
 	if err := json.NewEncoder(buf).Encode(v); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -34,10 +35,11 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 // BytePool example:
+// - io.CopyBuffer takes a []byte, so the pool holds *[]byte; a fixed-size chunk never grows.
 // - Stream without allocating a new buffer on every call.
 func copyPooled(dst io.Writer, src io.Reader) (int64, error) {
-	bp := scratch.Get()                 // Get a buffer from the pool
-	defer scratch.Put(bp)               // Put the buffer back in the pool
+	bp := bytePool.Get()                // Get a buffer from the pool
+	defer bytePool.Put(bp)              // Put the buffer back in the pool
 	return io.CopyBuffer(dst, src, *bp) // Copy the data from the source to the destination
 }
 
@@ -63,11 +65,18 @@ func copyPooled(dst io.Writer, src io.Reader) (int64, error) {
 
 // ## -------------------------------------------------------------------------------------------------------------------------------- ##
 
-// ## BufferPool - dynamic size buffers
-// Holds `*bytes.Buffer` values whose size varies. Use it to build output: JSON, CSV, templates, request bodies.
+// ## Which pool
+// Pick the type by what the API takes, not by the payload size:
+// - The API takes an io.Writer (json.NewEncoder, fmt.Fprintf, template.Execute) -> BufferPool.
+// - The API takes a []byte (Read, io.CopyBuffer) -> BytePool.
+// Whether a buffer grows decides whether its pool needs a maxCap.
+// An append-style []byte (strconv.AppendInt, time.AppendFormat) grows, so it needs one too.
 
-// BufferPool pools *bytes.Buffer values and drops any buffer that grew
-// past MaxCap, so one huge payload can't pin memory (golang/go#23199).
+// ## BufferPool - growing buffers for io.Writer APIs
+
+// BufferPool pools *bytes.Buffer values. A *bytes.Buffer is an io.Writer that grows
+// to fit whatever is written, so Put drops any buffer that grew past maxCap,
+// and one huge payload can't pin memory (golang/go#23199).
 type BufferPool struct {
 	pool   sync.Pool
 	maxCap int
@@ -91,15 +100,15 @@ func (p *BufferPool) Put(b *bytes.Buffer) {
 	if b.Cap() > p.maxCap {
 		return // too big to keep; drop it and let GC free it
 	}
-	b.Reset()
+	b.Reset() // reset length to 0, keep capacity
 	p.pool.Put(b)
 }
 
-// ## BytePool - fixed-size scratch buffers
-// Holds fixed-size `[]byte` scratch buffers. Use it to stream data with `io.CopyBuffer` or a `Read` loop.
+// ## BytePool - fixed-size buffers for []byte APIs
 
-// BytePool pools fixed-size byte slices. It stores *[]byte because
-// putting a plain []byte into `any` allocates (staticcheck SA6002).
+// BytePool pools fixed-size byte slices for APIs that take raw memory, not an io.Writer.
+// The slice never grows, so no maxCap is needed; Put only refuses a slice of another size.
+// It stores *[]byte because putting a plain []byte into `any` allocates (staticcheck SA6002).
 type BytePool struct {
 	pool sync.Pool
 	size int
@@ -110,19 +119,19 @@ func NewBytePool(size int) *BytePool {
 	p := &BytePool{size: size}
 	p.pool.New = func() any {
 		b := make([]byte, size)
-		return &b
+		return &b // a pointer, so Put doesn't allocate
 	}
 	return p
 }
 
 func (p *BytePool) Get() *[]byte {
-	return p.pool.Get().(*[]byte)
+	return p.pool.Get().(*[]byte) // the *[]byte that New returns
 }
 
 func (p *BytePool) Put(b *[]byte) {
 	if cap(*b) != p.size {
 		return // foreign or re-allocated slice
 	}
-	*b = (*b)[:p.size]
+	*b = (*b)[:p.size] // restore full length (p.size), keep capacity
 	p.pool.Put(b)
 }
